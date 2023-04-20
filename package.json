@@ -1,0 +1,21 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^17.6.1",
+    "@commitlint/config-conventional": "^17.6.1",
+    "@commitlint/config-lerna-scopes": "^17.4.2",
+    "husky": "^8.0.3",
+    "lerna": "^6.6.1",
+    "prettier": "2.8.7"
+  },
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "lint": "lerna run lint --parallel",
+    "setup": "npm install && npm run bootstrap",
+    "start": "lerna run start --parallel"
+  }
+}

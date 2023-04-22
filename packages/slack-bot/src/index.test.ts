@@ -18,8 +18,8 @@ describe('Worker', () => {
   it('should return Hello World', async () => {
     const resp = await worker.fetch();
     if (resp) {
-      const text = await resp.text();
-      expect(text).toMatchInlineSnapshot(`"Hello World!"`);
+      const json = await resp.json();
+      expect(json).toEqual({ message: 'Hello World!' });
     }
   });
 });

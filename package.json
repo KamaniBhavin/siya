@@ -16,6 +16,7 @@
     "bootstrap": "lerna bootstrap",
     "lint": "lerna run lint --parallel",
     "setup": "npm install && npm run bootstrap",
-    "start": "lerna run start --parallel"
+    "start": "lerna run start --parallel",
+    "prepare": "husky install"
   }
 }

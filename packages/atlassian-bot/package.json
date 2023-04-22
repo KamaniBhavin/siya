@@ -1,9 +1,9 @@
 {
-  "name": "atlassian-bot",
+  "name": "@siya/atlassian-bot",
   "version": "0.0.0",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230404.0",
-    "@shared/eslint-config": "^0.0.0",
+    "@siya/eslint-config": "^0.0.0",
     "eslint": "^8.38.0",
     "lint-staged": "^13.2.1",
     "typescript": "^5.0.4",

@@ -49,7 +49,7 @@ module.exports = {
       },
       {
         selector: ['typeProperty', 'typeParameter'],
-        format: ['camelCase'],
+        format: ['camelCase', "UPPER_CASE", "PascalCase"],
         leadingUnderscore: 'allow',
       },
       {

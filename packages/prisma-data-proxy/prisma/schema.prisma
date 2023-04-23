@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SlackStandUp {
+  id                  String                    @id @default(uuid()) @map("id")
+  createdAt           DateTime                  @default(now()) @map("created_at")
+  updatedAt           DateTime                  @updatedAt @map("updated_at")
+  name                String                    @map("name")
+  slackChannelId      String                    @map("slack_channel_id")
+  time                DateTime                  @map("time") @db.Time(0)
+  frequency           Frequency                 @map("frequency")
+  timezone            String                    @map("timezone")
+  slackTeamId         String                    @map("slack_team_id")
+  slackUserId         String                    @map("slack_user_id")
+  isJIRAIntegrationOn Boolean                   @default(false) @map("is_jira_integration_on")
+  participants        SlackStandUpParticipant[]
+  questions           SlackStandUpQuestion[]
+  responses           SlackStandUpResponse[]
+
+  @@map("slack_stand_ups")
+}
+
+model SlackStandUpParticipant {
+  id             String       @id @default(uuid()) @map("id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  slackUserId    String       @map("slack_user_id")
+  slackStandUpId String       @map("slack_stand_up_id")
+  slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
+
+  @@unique([slackUserId, slackStandUpId])
+  @@map("slack_stand_up_participants")
+}
+
+model SlackStandUpQuestion {
+  id             String       @id @default(uuid()) @map("id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  question       String       @map("question")
+  slackStandUpId String       @map("slack_stand_up_id")
+  slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
+
+  @@map("slack_stand_up_questions")
+}
+
+model SlackStandUpResponse {
+  id             String               @id @default(uuid()) @map("id")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  date           DateTime             @map("date") @db.Date
+  slackUserId    String               @map("slack_user_id")
+  slackStandUpId String               @map("slack_stand_up_id")
+  skipped        Boolean?             @map("skipped")
+  onLeave        Boolean?             @map("on_leave")
+  slackStandUp   SlackStandUp         @relation(fields: [slackStandUpId], references: [id])
+  updates        SlackStandUpUpdate[]
+
+  @@unique([slackUserId, slackStandUpId, date])
+  @@map("slack_stand_up_responses")
+}
+
+model SlackStandUpUpdate {
+  id                     String               @id @default(uuid()) @map("id")
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+  question               String               @map("question")
+  update                 String               @map("update")
+  slackStandUpResponseId String               @map("slack_stand_up_response_id")
+  slackStandUpResponse   SlackStandUpResponse @relation(fields: [slackStandUpResponseId], references: [id], onDelete: Cascade)
+
+  @@map("slack_stand_up_updates")
+}
+
+enum Frequency {
+  MONDAY_TO_FRIDAY
+  MONDAY_TO_SATURDAY
+  EVERYDAY
+}

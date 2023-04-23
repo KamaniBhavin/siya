@@ -10,7 +10,8 @@
     "@commitlint/config-lerna-scopes": "^17.4.2",
     "husky": "^8.0.3",
     "lerna": "^6.6.1",
-    "prettier": "2.8.7"
+    "prettier": "2.8.7",
+    "prisma": "^4.13.0"
   },
   "scripts": {
     "bootstrap": "lerna bootstrap",

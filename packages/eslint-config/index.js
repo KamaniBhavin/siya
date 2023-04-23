@@ -62,7 +62,7 @@ module.exports = {
       },
       {
         selector: ['class', 'function'],
-        format: ['PascalCase'],
+        format: ['camelCase', 'PascalCase'],
       },
       {
         selector: 'typeAlias',
@@ -75,6 +75,7 @@ module.exports = {
       {
         selector: ['accessor', 'property'],
         format: ['camelCase', 'PascalCase'],
+        leadingUnderscore: 'allow',
       },
     ],
   },

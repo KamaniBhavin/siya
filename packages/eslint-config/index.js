@@ -49,7 +49,7 @@ module.exports = {
       },
       {
         selector: ['typeProperty', 'typeParameter'],
-        format: ['camelCase', "UPPER_CASE", "PascalCase"],
+        format: ['camelCase', "UPPER_CASE", "PascalCase", "snake_case"],
         leadingUnderscore: 'allow',
       },
       {
@@ -71,10 +71,11 @@ module.exports = {
       {
         selector: 'method',
         format: ['camelCase'],
+        leadingUnderscore: 'allow',
       },
       {
         selector: ['accessor', 'property'],
-        format: ['camelCase', 'PascalCase'],
+        format: ['camelCase', 'PascalCase', "snake_case"],
         leadingUnderscore: 'allow',
       },
     ],

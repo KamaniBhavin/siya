@@ -1,18 +1,30 @@
 import { describe, expect, test } from 'vitest';
 import app from '../src';
+import { ExecutionContext } from 'hono/dist/types/context';
 
-const BINDINGS = getMiniflareBindings();
-
-describe('Cloudflare bindings test', () => {
-  test('should return bindings from env', async () => {
-    const req = new Request('http://localhost/', {
+describe('ping', () => {
+  test('should return pong', async () => {
+    const req = new Request(`${api}/ping`, {
       method: 'GET',
     });
 
     const resp = await app.fetch(req, BINDINGS);
     if (resp) {
       const json = await resp.json();
-      expect(json).toEqual({ message: 'Hello slack-bot!' });
+      expect(json).toEqual({ message: 'pong' });
     }
   });
 });
+
+export const api = 'http://localhost/api';
+export const BINDINGS = getMiniflareBindings();
+
+export class getMockExecutionContext implements ExecutionContext {
+  passThroughOnException(): void {
+    throw new Error('Method not implemented.');
+  }
+
+  async waitUntil(promise: Promise<unknown>): Promise<void> {
+    await promise;
+  }
+}

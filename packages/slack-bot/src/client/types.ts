@@ -117,7 +117,7 @@ export interface ISlackHomeMessageEvent {
 }
 
 /********* Slack Interactions *********/
-export interface ISlackInteraction<ModalState> {
+export interface ISlackInteraction {
   type:
     | 'block_actions'
     | 'shortcut'
@@ -129,27 +129,40 @@ export interface ISlackInteraction<ModalState> {
   api_app_id: string;
   token: string;
   trigger_id: string;
-  view?: ModalView & ISlackViewSubmission<ModalState>;
   response_url: string;
-  actions?: ISlackInteractionBlockAction[];
 }
 
-export interface ISlackInteractionBlockAction {
-  type: 'button';
-  action_id:
-    | 'create_stand_up'
-    | 'help'
-    | 'delete_stand_up'
-    | 'submit_stand_up'
-    | 'skip_stand_up'
-    | 'on_leave';
-  block_id: 'main';
-  text: {
-    type: 'plain_text' | 'mrkdwn';
-    text: string;
-    emoji: boolean;
+/********* Slack Views Submission *********/
+export interface ISlackViewSubmission<State> extends ISlackInteraction {
+  view: ModalView & {
+    id: string;
+    team_id: string;
+    hash: string;
+    app_id: string;
+    state: State;
+    bot_id: string;
   };
-  value: string;
+}
+
+/********* Slack Block Actions *********/
+export interface ISlackBlockAction extends ISlackInteraction {
+  actions: {
+    type: 'button';
+    action_id:
+      | 'create_stand_up'
+      | 'help'
+      | 'delete_stand_up'
+      | 'submit_stand_up'
+      | 'skip_stand_up'
+      | 'on_leave';
+    block_id: 'main';
+    text: {
+      type: 'plain_text' | 'mrkdwn';
+      text: string;
+      emoji: boolean;
+    };
+    value: string;
+  }[];
 }
 
 /********* Slack Responses *********/
@@ -186,14 +199,4 @@ export interface ISlackMessageResponse extends ISlackResponse {
     text: string;
     ts: string;
   };
-}
-
-/********* Slack Views Submission *********/
-export interface ISlackViewSubmission<State> {
-  id: string;
-  team_id: string;
-  hash: string;
-  app_id: string;
-  state: State;
-  bot_id: string;
 }

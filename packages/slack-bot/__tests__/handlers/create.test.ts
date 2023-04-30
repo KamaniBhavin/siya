@@ -1,5 +1,11 @@
 import { beforeAll, expect, test } from 'vitest';
-import { api, BINDINGS, getMockExecutionContext } from '../index.test';
+import {
+  api,
+  BINDINGS,
+  fakeSlackBotToken,
+  fakeTeamId,
+  getMockExecutionContext,
+} from '../index.test';
 import app from '../../src';
 
 const describe = setupMiniflareIsolatedStorage();
@@ -13,17 +19,19 @@ const describe = setupMiniflareIsolatedStorage();
 describe('should create a stand-up modal', () => {
   const url = `${api}/create`;
 
-  // Mock the Slack bot token
+  // Mock the Slack bot token. Below token is a fake token.
   beforeAll(async () => {
     const { SLACK_BOT_TOKENS } = await BINDINGS;
-    await SLACK_BOT_TOKENS.put('123', '123');
+    await SLACK_BOT_TOKENS.put(fakeTeamId, fakeSlackBotToken);
   });
 
+  // Below test will pass as the request is valid. But it will not open the modal.
+  // As trigger_id is mocked, it will not throw an error.
   test('should return 200', async () => {
     const formData = new FormData();
     formData.append('trigger_id', '123');
     formData.append('user_id', '123');
-    formData.append('team_id', '123');
+    formData.append('team_id', 'T04UP686HAQ');
 
     const req = new Request(url, { method: 'POST', body: formData });
 
@@ -37,7 +45,7 @@ describe('should create a stand-up modal', () => {
   test('should return 400 as trigger_id is missing', async () => {
     const formData = new FormData();
     formData.append('user_id', '123');
-    formData.append('team_id', '123');
+    formData.append('team_id', 'T04UP686HAQ');
 
     const req = new Request(url, { method: 'POST', body: formData });
 
@@ -51,7 +59,7 @@ describe('should create a stand-up modal', () => {
   test('should return 400 as user_id is missing', async () => {
     const formData = new FormData();
     formData.append('trigger_id', '123');
-    formData.append('team_id', '123');
+    formData.append('team_id', 'T04UP686HAQ');
 
     const req = new Request(url, { method: 'POST', body: formData });
 

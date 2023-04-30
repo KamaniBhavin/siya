@@ -1,60 +1,61 @@
 import { Frequency } from '@prisma/client';
+import { z } from 'zod';
 
-/************ All the slack view states ************/
+/************ All the slack view states and their schemas ************/
 
-export type SlackCreateStandUpModalState = {
-  values: {
-    name_block: {
-      name: {
-        type: 'plain_text_input';
-        value: string;
-      };
-    };
-    participants_block: {
-      participants: {
-        type: 'multi_users_select';
-        selected_users: string[];
-      };
-    };
-    channel_block: {
-      channel: {
-        type: 'channels_select';
-        selected_channel: string;
-      };
-    };
-    frequency_block: {
-      frequency: {
-        type: 'static_select';
-        selected_option: {
-          value: Frequency;
-        };
-      };
-    };
-    stand_up_at_block: {
-      stand_up_at: {
-        type: 'timepicker';
-        selected_time: string;
-      };
-      timezone: {
-        type: 'static_select';
-        selected_option: {
-          value: string;
-        };
-      };
-    };
-    timezone_block: {
-      timezone: {
-        type: 'static_select';
-        selected_option: {
-          value: string;
-        };
-      };
-    };
-    questions_block: {
-      questions: {
-        type: 'plain_text_input';
-        value: string;
-      };
-    };
-  };
-};
+export const SlackCreateStandUpModalStateSchema = z.object({
+  values: z.object({
+    name_block: z.object({
+      name: z.object({
+        type: z.literal('plain_text_input'),
+        value: z.string(),
+      }),
+    }),
+    participants_block: z.object({
+      participants: z.object({
+        type: z.literal('multi_users_select'),
+        selected_users: z.array(z.string()),
+      }),
+    }),
+    channel_block: z.object({
+      channel: z.object({
+        type: z.literal('channels_select'),
+        selected_channel: z.string(),
+      }),
+    }),
+    frequency_block: z.object({
+      frequency: z.object({
+        type: z.literal('static_select'),
+        selected_option: z.object({
+          value: z.enum([
+            Frequency.EVERYDAY,
+            Frequency.MONDAY_TO_FRIDAY,
+            Frequency.MONDAY_TO_SATURDAY,
+          ]),
+        }),
+      }),
+    }),
+    stand_up_at_block: z.object({
+      stand_up_at: z.object({
+        type: z.literal('timepicker'),
+        selected_time: z.string(),
+      }),
+      timezone: z.object({
+        type: z.literal('static_select'),
+        selected_option: z.object({
+          value: z.string(),
+        }),
+      }),
+    }),
+    questions_block: z.object({
+      questions: z.object({
+        type: z.literal('plain_text_input'),
+        value: z.string(),
+      }),
+    }),
+  }),
+});
+
+export type SlackCreateStandUpModalState = z.infer<
+  typeof SlackCreateStandUpModalStateSchema
+>;

@@ -5,6 +5,7 @@
     "@cloudflare/workers-types": "^4.20230404.0",
     "@siya/eslint-config": "^0.0.0",
     "@siya/prisma-data-proxy": "^0.0.0",
+    "@types/luxon": "^3.3.0",
     "eslint": "^8.38.0",
     "lint-staged": "^13.2.1",
     "typescript": "^5.0.4",
@@ -24,6 +25,7 @@
     "@hono/zod-validator": "^0.1.2",
     "@slack/types": "^2.8.0",
     "hono": "^3.1.6",
+    "luxon": "^3.3.0",
     "toucan-js": "^3.1.0",
     "zod": "^3.21.4"
   }

@@ -18,6 +18,9 @@ describe('ping', () => {
 
 export const api = 'http://localhost/api';
 export const BINDINGS = getMiniflareBindings();
+export const fakeTeamId = 'T04UP686HAQ';
+export const fakeSlackBotToken =
+  'xoxb-4975212221364-5063368783521-LZ11NOUW6e4IkFQXw9GJNn9M';
 
 export class getMockExecutionContext implements ExecutionContext {
   passThroughOnException(): void {

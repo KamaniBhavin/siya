@@ -6,6 +6,8 @@ import { authorizationSchema } from './schemas/authorization';
 import authorization from './handlers/authorization';
 import { createSchema } from './schemas/create';
 import { create } from './handlers/create';
+import { interactionsSchema } from './schemas/interactions';
+import { interactions } from './handlers/interactions';
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api');
 // Register sentry middleware
@@ -17,9 +19,36 @@ app.get('/ping', (c) => {
 });
 
 // A Slack OAuth callback handler
-app.get('/authorize', zValidator('query', authorizationSchema), authorization);
+app.get(
+  '/authorize',
+  zValidator('query', authorizationSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  authorization,
+);
 
 // A Slack route to create a new stand-up
-app.post('/create', zValidator('form', createSchema), create);
+app.post(
+  '/create',
+  zValidator('form', createSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  create,
+);
+
+//A Slack route for all the interactions
+app.post(
+  '/interactions',
+  zValidator('form', interactionsSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  interactions,
+);
 
 export default app;

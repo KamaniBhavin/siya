@@ -7,15 +7,18 @@ import { Context } from 'hono';
 import { Bindings } from '../bindings';
 import { z } from 'zod';
 import { Slack } from '../client/slack';
-import { SlackStandUp } from '@prisma/client/edge';
+import { SlackStandUp, SlackStandUpParticipant } from '@prisma/client/edge';
 import { db } from '../../../prisma-data-proxy';
 import { DateTime } from 'luxon';
+import {
+  ISlackStandUpReminderDOData,
+  ISlackStandUpReminderDORequest,
+} from '../durable_objects/stand_up_reminder_do';
 
 export async function createStandUp(
   interaction: ISlackViewSubmission<SlackCreateStandUpModalState>,
   context: Context<{ Bindings: Bindings }>,
 ) {
-  const prisma = db(context.env.DATABASE_URL);
   const parsed = SlackCreateStandUpModalStateSchema.safeParse(
     interaction.view.state,
   );
@@ -24,6 +27,20 @@ export async function createStandUp(
     return context.text(parsed.error.message, 400);
   }
 
+  // This is non-blocking, so we don't need to wait for it to finish.
+  // This is done so that we can return a response to Slack as soon as possible.
+  // Prisma has some serious cold start issues, so we want to avoid
+  // delaying the response to Slack.
+  context.executionCtx.waitUntil(createAsync(interaction, context));
+
+  return context.newResponse(null, 200);
+}
+
+async function createAsync(
+  interaction: ISlackViewSubmission<SlackCreateStandUpModalState>,
+  context: Context<{ Bindings: Bindings }>,
+) {
+  const prisma = db(context.env.DATABASE_URL);
   const {
     values: {
       name_block: {
@@ -50,9 +67,12 @@ export async function createStandUp(
         questions: { value: questions },
       },
     },
-  } = parsed.data;
+  } = interaction.view.state;
 
   const standUp = await prisma.slackStandUp.create({
+    include: {
+      participants: true,
+    },
     data: {
       name: standUpName,
       slackChannelId: channel,
@@ -78,27 +98,72 @@ export async function createStandUp(
     },
   });
 
-  // This is non-blocking.
-  // Slack will wait for 3 seconds for a response. If we don't respond within 3 seconds, Slack will show an error.
-  context.executionCtx.waitUntil(
-    sendStandUpOnBoardingMessage(standUp, context),
-  );
-
-  return context.newResponse(null, 200);
-}
-
-async function sendStandUpOnBoardingMessage(
-  standUp: SlackStandUp,
-  context: Context<{ Bindings: Bindings }>,
-) {
-  const { slackTeamId, slackUserId } = standUp;
   const token = z
     .string()
-    .parse(await context.env.SLACK_BOT_TOKENS.get(slackTeamId));
-
+    .parse(await context.env.SLACK_BOT_TOKENS.get(standUp.slackTeamId));
   const slackClient = new Slack(token);
+
   await slackClient.postMessage({
-    channel: slackUserId,
+    channel: standUp.slackUserId,
     text: 'Stand up created successfully! :tada:',
   });
+
+  await initializeSlackStandUpReminderDOs(standUp, context);
+
+  return context.json({ ok: true }, 200);
+}
+
+async function initializeSlackStandUpReminderDOs(
+  standUp: SlackStandUp & { participants: SlackStandUpParticipant[] },
+  { env }: Context<{ Bindings: Bindings }>,
+) {
+  const { participants, time, timezone } = standUp;
+
+  // String representation of the time of the stand-up in the user's timezone.
+  const standUpAt = DateTime.fromJSDate(time)
+    .toLocaleString(DateTime.TIME_SIMPLE)
+    .concat(' ', timezone);
+
+  // The time to remind the user to do the stand-up. This is 30 minutes before
+  // the stand-up time.
+  let remindAt = DateTime.now()
+    .setZone(timezone)
+    .set({ hour: time.getHours(), minute: time.getMinutes() })
+    .minus({ minutes: 30 });
+
+  // If the remindAt time is in the past, then we need to remind the user
+  // tomorrow.
+  if (remindAt.diffNow().milliseconds < 0) {
+    remindAt = remindAt.plus({ day: 1 });
+  }
+
+  await Promise.all(
+    participants.map(async ({ slackUserId }) => {
+      // A combination of the stand-up ID and the user's Slack ID is always unique.
+      const doId = env.SLACK_STAND_UP_REMINDER_DO.idFromName(
+        `${standUp.id}-${slackUserId}`,
+      );
+      const stub = await env.SLACK_STAND_UP_REMINDER_DO.get(doId);
+
+      const request = new Request(env.SIYA_API_URL, {
+        method: 'POST',
+        body: JSON.stringify(<ISlackStandUpReminderDORequest>{
+          data: <ISlackStandUpReminderDOData>{
+            type: 'initialize',
+            standUpId: standUp.id,
+            name: standUp.name,
+            slackTeamId: standUp.slackTeamId,
+            slackChannelId: standUp.slackChannelId,
+            remindAt: remindAt.toMillis(),
+            timezone: timezone,
+            standUpAt: standUpAt,
+            frequency: standUp.frequency,
+            participantSlackId: slackUserId,
+          },
+        }),
+      });
+
+      await stub.fetch(request);
+    }),
+  );
 }

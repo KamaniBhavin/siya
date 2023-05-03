@@ -52,3 +52,6 @@ app.post(
 );
 
 export default app;
+
+/********************** Durable Objects **********************/
+export { SlackStandUpReminderDO } from './durable_objects/stand_up_reminder_do';

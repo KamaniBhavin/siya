@@ -6,3 +6,18 @@ usage_model = "bundled" # 50ms compute time per request
 kv_namespaces = [
   { binding = "SLACK_BOT_TOKENS", id = "7d1d5231038041458ccb2e4ee090aadd", preview_id = "50280399e4d749819549fe0658183c86" }
 ]
+
+[durable_objects]
+bindings = [
+  { name = "SLACK_STAND_UP_REMINDER_DO", class_name = "SlackStandUpReminderDO" }
+]
+
+[vars]
+SIYA_API_URL = "https://siya-slack-bot.bhavinkamani.workers.dev"
+SLACK_API_URL = "https://slack.com/api"
+SLACK_APP_ID = "A04UP8F9THA"
+SLACK_CLIENT_ID = "4975212221364.4975287333588"
+
+[[migrations]]
+tag = "v0.0.1"
+new_classes = ["SlackStandUpReminderDO"]

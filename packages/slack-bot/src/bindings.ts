@@ -10,4 +10,5 @@ export type Bindings = {
   SLACK_SIGNING_SECRET: string;
   SIYA_API_URL: string;
   SLACK_BOT_TOKENS: KVNamespace;
+  SLACK_STAND_UP_REMINDER_DO: DurableObjectNamespace;
 };

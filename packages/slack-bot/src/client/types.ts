@@ -58,6 +58,13 @@ export type SlackModal = {
   view: ModalView;
 };
 
+export type SlackEphemeralMessage = {
+  channel: string; // can be user id for DM in BOT context
+  user: string;
+  text?: string;
+  blocks?: KnownBlock[];
+};
+
 /********* Slack Events *********/
 export interface ISlackEvent {
   token: string;
@@ -66,11 +73,6 @@ export interface ISlackEvent {
   type: 'event_callback' | 'url_verification' | 'app_rate_limited';
   event_id: string;
   event_time: number;
-  event:
-    | ISlackAppMentionEvent
-    | ISlackAppUnInstalledEvent
-    | ISlackAppHomeOpenedEvent
-    | ISlackHomeMessageEvent;
   authorizations: {
     enterprise_id: string;
     team_id: string;
@@ -79,41 +81,55 @@ export interface ISlackEvent {
     is_enterprise_install: boolean;
   }[];
   authed_users: string[];
-  challenge: string; // Only present for url_verification
+  event?: {
+    type: 'app_mention' | 'app_home_opened' | 'message' | 'app_uninstalled';
+  };
 }
 
-export interface ISlackAppUnInstalledEvent {
-  type: 'app_uninstalled';
+export interface ISlackAppUnInstalledEvent extends ISlackEvent {
+  event: {
+    type: 'app_uninstalled';
+  };
 }
 
-export interface ISlackAppMentionEvent {
-  type: 'app_mention';
-  user: string;
-  text: string;
-  ts: string;
-  channel: string;
-  event_ts: string;
+export interface ISlackAppMentionEvent extends ISlackEvent {
+  event: {
+    type: 'app_mention';
+    user: string;
+    text: string;
+    ts: string;
+    channel: string;
+    event_ts: string;
+  };
 }
 
-export interface ISlackAppHomeOpenedEvent {
-  type: 'app_home_opened';
-  user: string;
-  channel: string;
-  event_ts: string;
-  tab: 'home' | 'messages' | 'search' | 'notifications' | 'settings';
-  view: { id: string } & HomeView;
+export interface ISlackAppHomeOpenedEvent extends ISlackEvent {
+  event: {
+    type: 'app_home_opened';
+    user: string;
+    channel: string;
+    event_ts: string;
+    tab: 'home' | 'messages' | 'search' | 'notifications' | 'settings';
+    view: { id: string } & HomeView;
+  };
 }
 
-export interface ISlackHomeMessageEvent {
-  client_msg_id?: string;
-  type: 'message';
-  user: string;
-  channel: string;
-  text: string;
-  blocks: KnownBlock[];
-  ts: string;
-  event_ts: string;
-  channel_type: 'im' | 'mpim' | 'group' | 'channel';
+export interface ISlackHomeMessageEvent extends ISlackEvent {
+  event: {
+    client_msg_id?: string;
+    type: 'message';
+    user: string;
+    channel: string;
+    text: string;
+    blocks: KnownBlock[];
+    ts: string;
+    event_ts: string;
+    channel_type: 'im' | 'mpim' | 'group' | 'channel';
+  };
+}
+
+export interface ISlackUrlVerificationEvent extends ISlackEvent {
+  challenge: string;
 }
 
 /********* Slack Interactions *********/

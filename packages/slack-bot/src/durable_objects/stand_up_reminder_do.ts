@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { Slack } from '../client/slack';
 import { standUpOnBoardingMessage } from '../ui/stand_up_on_boarding_message';
 import { DateTime, DurationLike } from 'luxon';
-import { slackStandUpUpdateAlertMessage } from '../ui/stand_up_update_alert_message';
+import { slackStandUpReminderMessage } from '../ui/stand_up_reminder_message';
 import { ISlackMessageResponse } from '../client/types';
 
 /************************* Types *************************/
-export interface ISlackStandUpReminderDORequest {
-  data: ISlackStandUpReminderDOData | { type: 'delete_alert_message' };
-}
+export type ISlackStandUpReminderDORequest =
+  | ISlackStandUpReminderDOData
+  | { type: 'delete_alert_message' };
 
 export interface ISlackStandUpReminderDOData {
   type: 'initialize';
@@ -61,7 +61,21 @@ export class SlackStandUpReminderDO {
       throw new Error('Data and state must be initialized');
     }
 
-    const { frequency, slackTeamId, timezone } = this._data;
+    const { participantSlackId, frequency, slackTeamId, timezone } = this._data;
+
+    // Check if the participant is active in any other stand up conversation
+    const isInActiveConversation =
+      await this._env.SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS.get(
+        participantSlackId,
+      );
+
+    // If the participant is active in any other stand up conversation, reschedule the reminder
+    // to 5 minutes later
+    if (isInActiveConversation) {
+      await this._reschedule({ minutes: 5 });
+      return;
+    }
+
     const token = z
       .string()
       .parse(await this._env.SLACK_BOT_TOKENS.get(slackTeamId));
@@ -81,7 +95,7 @@ export class SlackStandUpReminderDO {
 
     const response = await slackClient.postMessage({
       channel: this._data.participantSlackId,
-      blocks: slackStandUpUpdateAlertMessage(
+      blocks: slackStandUpReminderMessage(
         this._data.participantSlackId,
         this._data.standUpId,
       ).blocks,
@@ -107,7 +121,7 @@ export class SlackStandUpReminderDO {
    * @param request - The request to handle
    * @returns A response to the request
    */
-  fetch(request: Request): Promise<Response> {
+  fetch(request: Request) {
     switch (request.method) {
       case 'DELETE':
         return this._delete();
@@ -116,17 +130,21 @@ export class SlackStandUpReminderDO {
     }
   }
 
-  private async _handle(request: Request): Promise<Response> {
+  private async _handle(request: Request) {
     const body: ISlackStandUpReminderDORequest = await request.json();
 
-    switch (body.data.type) {
+    switch (body.type) {
       case 'initialize':
-        return this._initialize(body.data);
+        await this._initialize(body);
+        break;
       case 'delete_alert_message':
-        return this._deleteAlertMessage();
+        await this._deleteAlertMessage();
+        break;
       default:
-        return new Response(null, { status: 500 });
+        throw new Error('Invalid request type');
     }
+
+    return new Response(null, { status: 200 });
   }
 
   /**
@@ -142,6 +160,8 @@ export class SlackStandUpReminderDO {
   private async _initialize(data: ISlackStandUpReminderDOData) {
     this._data = data;
     this._state = { alerted: false };
+    // Persist the state of the DO
+    await this._persist();
 
     const {
       name,
@@ -164,11 +184,6 @@ export class SlackStandUpReminderDO {
       channel: participantSlackId,
       blocks: standUpOnBoardingMessage(name, slackChannelId, standUpAt).blocks,
     });
-
-    // Persist the state of the DO
-    await this._persist();
-
-    return new Response(null, { status: 200 });
   }
 
   private async _deleteAlertMessage() {
@@ -176,17 +191,12 @@ export class SlackStandUpReminderDO {
       throw new Error('Data and state must be initialized');
     }
 
-    this._state.alerted = false;
-    await this._persist();
-
     const { slackTeamId } = this._data;
-
     const token = z
       .string()
       .parse(await this._env.SLACK_BOT_TOKENS.get(slackTeamId));
 
     const slackClient = new Slack(token);
-
     const messageResponse = await this._storage.get<ISlackMessageResponse>(
       'reminder_message_response',
     );
@@ -194,6 +204,9 @@ export class SlackStandUpReminderDO {
     if (!messageResponse) {
       throw new Error('Message response not found');
     }
+
+    this._state.alerted = false;
+    await this._persist();
 
     const response = await slackClient.deleteMessage({
       channel: messageResponse.channel,
@@ -203,8 +216,6 @@ export class SlackStandUpReminderDO {
     if (!response.ok) {
       console.error('Error deleting stand up update alert message', response);
     }
-
-    return new Response(null, { status: 200 });
   }
 
   private async _reschedule(duration?: DurationLike) {
@@ -245,8 +256,8 @@ export class SlackStandUpReminderDO {
   }
 
   // Persist the state of the DO.
-  protected _persist() {
-    this._storage.put('data', this._data);
-    this._storage.put('state', this._state);
+  protected async _persist() {
+    await this._storage.put('data', this._data);
+    await this._storage.put('state', this._state);
   }
 }

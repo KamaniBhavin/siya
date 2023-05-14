@@ -6,9 +6,9 @@ export default defineConfig({
     dir: '__tests__',
     environment: 'miniflare',
     // see: https://github.com/cloudflare/miniflare/issues/417
-    // environmentOptions: {
-    //   scriptPath: 'dist/index.js',
-    //   modules: true,
-    // }
+    environmentOptions: {
+      scriptPath: 'dist/index.js',
+      modules: true,
+    },
   },
 });

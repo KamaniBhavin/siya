@@ -6,9 +6,9 @@ import {
   ISlackInteraction,
   ISlackViewSubmission,
 } from '../client/types';
-import { createStandUp } from '../services/create_stand_up_service';
 import { SlackCreateStandUpModalState } from '../client/states';
-import { openCreateStandUpModal } from './create';
+import { handleBlockActions } from '../services/handle_block_actions_service';
+import { handleViewSubmissions } from '../services/handle_view_submissions_service';
 
 export async function interactions(context: Context<{ Bindings: Bindings }>) {
   const form = await context.req.formData();
@@ -18,46 +18,23 @@ export async function interactions(context: Context<{ Bindings: Bindings }>) {
 
   const interaction: ISlackInteraction = JSON.parse(payload);
 
-  switch (interaction.type) {
-    case 'view_submission':
-      return handleViewSubmissions(
-        <ISlackViewSubmission<SlackCreateStandUpModalState>>interaction,
-        context,
-      );
-    case 'block_actions':
-      return handleBlockActions(<ISlackBlockAction>interaction, context);
-    default:
-      return context.newResponse(null, 200);
-  }
-}
+  // This is handled in the background. so, we don't need to wait for it
+  // to finish. This is done so that we can return a response to Slack
+  // as soon as possible.
+  context.executionCtx.waitUntil(
+    (async () => {
+      switch (interaction.type) {
+        case 'view_submission':
+          await handleViewSubmissions(
+            <ISlackViewSubmission<SlackCreateStandUpModalState>>interaction,
+            context.env,
+          );
+          break;
+        case 'block_actions':
+          await handleBlockActions(<ISlackBlockAction>interaction, context.env);
+      }
+    })(),
+  );
 
-async function handleViewSubmissions(
-  interaction: ISlackViewSubmission<SlackCreateStandUpModalState>,
-  context: Context<{ Bindings: Bindings }>,
-) {
-  switch (interaction.view.callback_id) {
-    case 'create_stand_up':
-      return await createStandUp(interaction, context);
-    default:
-      return context.newResponse(null, 200);
-  }
-}
-
-async function handleBlockActions(
-  interaction: ISlackBlockAction,
-  context: Context<{ Bindings: Bindings }>,
-) {
-  const {
-    trigger_id: triggerId,
-    actions: [{ action_id: actionId }],
-    user: { id: userId },
-    team: { id: teamId },
-  } = interaction;
-
-  switch (actionId) {
-    case 'create_stand_up':
-      return await openCreateStandUpModal(triggerId, userId, teamId, context);
-    default:
-      return context.newResponse(null, 200);
-  }
+  return context.newResponse(null, 200);
 }

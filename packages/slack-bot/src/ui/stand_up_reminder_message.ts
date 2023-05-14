@@ -1,8 +1,8 @@
 import { SlackBlocks } from '../client/types';
 
-export function slackStandUpUpdateAlertMessage(
+export function slackStandUpReminderMessage(
   participant: string,
-  standUpUUID: string,
+  standUpId: string,
 ): SlackBlocks {
   return {
     blocks: [
@@ -24,7 +24,7 @@ export function slackStandUpUpdateAlertMessage(
               text: 'Submit',
               emoji: true,
             },
-            value: standUpUUID,
+            value: standUpId,
             action_id: 'submit_stand_up',
             style: 'primary',
           },
@@ -35,7 +35,7 @@ export function slackStandUpUpdateAlertMessage(
               text: 'Skip',
               emoji: true,
             },
-            value: standUpUUID,
+            value: standUpId,
             action_id: 'skip_stand_up',
           },
           {
@@ -45,7 +45,7 @@ export function slackStandUpUpdateAlertMessage(
               text: 'On leave',
               emoji: true,
             },
-            value: standUpUUID,
+            value: standUpId,
             action_id: 'on_leave',
             style: 'danger',
           },

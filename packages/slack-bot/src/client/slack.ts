@@ -7,6 +7,7 @@ import {
   ISlackOAuthResponse,
   ISlackResponse,
   SlackDeleteMessage,
+  SlackEphemeralMessage,
   SlackHomeView,
   SlackMessage,
   SlackModal,
@@ -70,7 +71,7 @@ export class Slack {
    *
    * @returns Promise - Response of the request.
    */
-  private async _request<R>(
+  private async _request<R extends ISlackResponse>(
     method: HttpMethod,
     path: string,
     options: Options,
@@ -124,11 +125,18 @@ export class Slack {
 
     // Handle errors
     if (!response.ok) {
-      console.error(await response.json());
-      throw new Error(`\n${response.status} ${response.statusText}`);
+      throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    // Parse the response
+    const data: R = await response.json();
+
+    // Handle Slack API errors
+    if (!data.ok) {
+      throw new Error(`Slack API error: ${JSON.stringify(data, null, 2)}`);
+    }
+
+    return data;
   }
 
   /**
@@ -194,6 +202,20 @@ export class Slack {
    */
   async deleteMessage(body: SlackDeleteMessage) {
     return this._request<ISlackMessageResponse>('POST', '/chat.delete', {
+      body,
+    });
+  }
+
+  /**
+   * Sends an ephemeral message to a user in a channel using the chat.postEphemeral method.
+   * @see https://api.slack.com/methods/chat.postEphemeral
+   *
+   *  @param body - Message to send to Slack of type SlackEphemeralMessage
+   *
+   *  @returns {Promise<ISlackMessageResponse>} - Response of the request.
+   */
+  async postEphemeral(body: SlackEphemeralMessage) {
+    return this._request<ISlackMessageResponse>('POST', '/chat.postEphemeral', {
       body,
     });
   }

@@ -15,7 +15,7 @@ export async function create(context: Context<{ Bindings: Bindings }>) {
 
   // This is non-blocking and will not block the response.
   context.executionCtx.waitUntil(
-    openCreateStandUpModal(triggerId, userId, teamId, context),
+    openCreateStandUpModal(triggerId, userId, teamId, context.env),
   );
 
   return context.newResponse(null, 200);
@@ -25,11 +25,9 @@ export async function openCreateStandUpModal(
   triggerId: string,
   userId: string,
   teamId: string,
-  context: Context<{ Bindings: Bindings }>,
+  env: Bindings,
 ) {
-  const token = z
-    .string()
-    .parse(await context.env.SLACK_BOT_TOKENS.get(teamId));
+  const token = z.string().parse(await env.SLACK_BOT_TOKENS.get(teamId));
   const slackClient = new Slack(token);
   const modal = slackCreateStandUpModal(userId, triggerId);
 

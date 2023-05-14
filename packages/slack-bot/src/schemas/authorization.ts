@@ -1,5 +1,5 @@
 import { z } from 'zod';
 
-export const authorizationSchema = z.object({
+export const AuthorizationSchema = z.object({
   code: z.string(),
 });

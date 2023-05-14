@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { Bindings } from '../bindings';
-import { interactionsSchema } from '../schemas/interactions';
+import { InteractionsSchema } from '../schemas/interactions';
 import {
   ISlackBlockAction,
   ISlackInteraction,
@@ -12,7 +12,7 @@ import { handleViewSubmissions } from '../services/handle_view_submissions_servi
 
 export async function interactions(context: Context<{ Bindings: Bindings }>) {
   const form = await context.req.formData();
-  const { payload: payload } = interactionsSchema.parse(
+  const { payload: payload } = InteractionsSchema.parse(
     Object.fromEntries(form.entries()),
   );
 

@@ -25,13 +25,13 @@ export interface ISlackStandUpParticipantResponse {
     | ['on_leave'];
 }
 
-export const standUpResponseSchema = z.object({
+export const StandUpResponseSchema = z.object({
   questionId: z.string(),
   question: z.string(),
   response: z.string(),
 });
 
-export type IStandUpResponse = z.infer<typeof standUpResponseSchema>;
+export type IStandUpResponse = z.infer<typeof StandUpResponseSchema>;
 
 export interface ISlackStandUpBriefDOData {
   slackChannelId: string;

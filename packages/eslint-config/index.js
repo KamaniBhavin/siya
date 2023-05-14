@@ -78,6 +78,14 @@ module.exports = {
         format: ['camelCase', 'PascalCase', "snake_case"],
         leadingUnderscore: 'allow',
       },
+      { // To maintain consistent naming convention for schema for zod.
+        selector: 'variable',
+        format: ['PascalCase'],
+        filter: {
+          regex: 'Schema$',
+          match: true,
+        }
+      }
     ],
   },
 };

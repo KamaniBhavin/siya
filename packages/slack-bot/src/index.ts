@@ -2,13 +2,13 @@ import { Hono } from 'hono';
 import { Bindings } from './bindings';
 import { sentry } from './middlewares/sentry';
 import { zValidator } from '@hono/zod-validator';
-import { authorizationSchema } from './schemas/authorization';
+import { AuthorizationSchema } from './schemas/authorization';
 import authorization from './handlers/authorization';
-import { createSchema } from './schemas/create';
+import { CreateSchema } from './schemas/create';
 import { create } from './handlers/create';
-import { interactionsSchema } from './schemas/interactions';
+import { InteractionsSchema } from './schemas/interactions';
 import { interactions } from './handlers/interactions';
-import { eventSchema } from './schemas/events';
+import { EventSchema } from './schemas/events';
 import { events } from './handlers/events';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -22,7 +22,7 @@ app.get('/ping', (c) => {
 // A Slack OAuth callback handler
 app.get(
   '/authorize',
-  zValidator('query', authorizationSchema, (result, c) => {
+  zValidator('query', AuthorizationSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }
@@ -33,7 +33,7 @@ app.get(
 // A Slack route to create a new stand-up
 app.post(
   '/create',
-  zValidator('form', createSchema, (result, c) => {
+  zValidator('form', CreateSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }
@@ -44,7 +44,7 @@ app.post(
 //A Slack route for all the interactions
 app.post(
   '/interactions',
-  zValidator('form', interactionsSchema, (result, c) => {
+  zValidator('form', InteractionsSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }
@@ -55,7 +55,7 @@ app.post(
 //A Slack route for all the events
 app.post(
   '/events',
-  zValidator('json', eventSchema, (result, c) => {
+  zValidator('json', EventSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }

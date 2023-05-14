@@ -1,7 +1,7 @@
 import {
   ISlackStandUpParticipantResponse,
   IStandUpResponse,
-  standUpResponseSchema,
+  StandUpResponseSchema,
 } from '../durable_objects/stand_up_brief_do';
 import { SlackBlocks } from '../client/types';
 import { DateTime } from 'luxon';
@@ -82,7 +82,7 @@ function buildStandUpResponseBlocks(
   return responses
     .filter((response) => response.data[0] === 'submit_stand_up')
     .map((response) => {
-      const data = z.array(standUpResponseSchema).parse(response.data[1]);
+      const data = z.array(StandUpResponseSchema).parse(response.data[1]);
 
       return [
         {

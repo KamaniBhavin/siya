@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const eventWrapperSchema = z.object({
+export const EventWrapperSchema = z.object({
   token: z.string(),
   team_id: z.string(),
   api_app_id: z.string(),
@@ -28,23 +28,23 @@ export const eventWrapperSchema = z.object({
     .optional(),
 });
 
-export const urlVerificationEventSchema = z.object({
+export const UrlVerificationEventSchema = z.object({
   token: z.string(),
   challenge: z.string(),
 });
 
-export const eventSchema = z.union([
-  eventWrapperSchema,
-  urlVerificationEventSchema,
+export const EventSchema = z.union([
+  EventWrapperSchema,
+  UrlVerificationEventSchema,
 ]);
 
-export const appUninstalledEventSchema = eventWrapperSchema.extend({
+export const AppUninstalledEventSchema = EventWrapperSchema.extend({
   event: z.object({
     type: z.literal('app_uninstalled'),
   }),
 });
 
-export const appMentionEventSchema = eventWrapperSchema.extend({
+export const AppMentionEventSchema = EventWrapperSchema.extend({
   event: z.object({
     type: z.literal('app_mention'),
     user: z.string(),
@@ -55,7 +55,7 @@ export const appMentionEventSchema = eventWrapperSchema.extend({
   }),
 });
 
-export const appHomeOpenedEventSchema = eventWrapperSchema.extend({
+export const AppHomeOpenedEventSchema = EventWrapperSchema.extend({
   event: z.object({
     type: z.literal('app_home_opened'),
     user: z.string(),
@@ -72,7 +72,7 @@ export const appHomeOpenedEventSchema = eventWrapperSchema.extend({
   }),
 });
 
-export const homeMessageEventSchema = eventWrapperSchema.extend({
+export const HomeMessageEventSchema = EventWrapperSchema.extend({
   event: z.object({
     type: z.literal('message'),
     client_msg_id: z.string().optional(),

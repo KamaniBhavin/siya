@@ -3,10 +3,10 @@ import { Bindings } from '../bindings';
 import { ISlackEvent } from '../client/types';
 import { z } from 'zod';
 import {
-  appHomeOpenedEventSchema,
-  appUninstalledEventSchema,
-  homeMessageEventSchema,
-  urlVerificationEventSchema,
+  AppHomeOpenedEventSchema,
+  AppUninstalledEventSchema,
+  HomeMessageEventSchema,
+  UrlVerificationEventSchema,
 } from '../schemas/events';
 import { db } from '../../../prisma-data-proxy';
 import { slackHomeView } from '../ui/home_view';
@@ -18,7 +18,7 @@ export async function events(context: Context<{ Bindings: Bindings }>) {
   const event: ISlackEvent = await context.req.json();
 
   if (event.type === 'url_verification') {
-    const { challenge } = urlVerificationEventSchema.parse(event);
+    const { challenge } = UrlVerificationEventSchema.parse(event);
     return context.json({ challenge });
   }
 
@@ -35,19 +35,19 @@ async function handleEvents(
 ) {
   switch (event.event?.type) {
     case 'app_uninstalled':
-      await appUninstalled(appUninstalledEventSchema.parse(event), context);
+      await appUninstalled(AppUninstalledEventSchema.parse(event), context);
       break;
     case 'app_home_opened':
-      await appHomeOpened(appHomeOpenedEventSchema.parse(event), context);
+      await appHomeOpened(AppHomeOpenedEventSchema.parse(event), context);
       break;
     case 'message':
-      await appHomeMessage(homeMessageEventSchema.parse(event), context);
+      await appHomeMessage(HomeMessageEventSchema.parse(event), context);
       break;
   }
 }
 
 async function appUninstalled(
-  event: z.infer<typeof appUninstalledEventSchema>,
+  event: z.infer<typeof AppUninstalledEventSchema>,
   { env }: Context<{ Bindings: Bindings }>,
 ) {
   const prisma = db(env.DATABASE_URL);
@@ -78,7 +78,7 @@ async function appUninstalled(
 }
 
 async function appHomeOpened(
-  event: z.infer<typeof appHomeOpenedEventSchema>,
+  event: z.infer<typeof AppHomeOpenedEventSchema>,
   { env }: Context<{ Bindings: Bindings }>,
 ) {
   const {
@@ -116,7 +116,7 @@ export async function publishHome(
 }
 
 async function appHomeMessage(
-  event: z.infer<typeof homeMessageEventSchema>,
+  event: z.infer<typeof HomeMessageEventSchema>,
   { env }: Context<{ Bindings: Bindings }>,
 ) {
   const { user, text, client_msg_id: msgId } = event.event;

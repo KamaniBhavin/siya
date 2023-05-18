@@ -9,22 +9,33 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy Slack Bot
+    env:
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      PLANET_SCALE_DB_URL: ${{ secrets.PLANET_SCALE_DB_URL }}
+      
     steps:
       - uses: actions/checkout@v2
         
       - name: restore cache
+        id: restore-cache
         uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
           
       - name: install dependencies and cache
-        if: steps.restore-lerna.outputs.cache-hit != 'true'
+        id: install-dependencies
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
           npm run setup
           npx prisma db push --schema=packages/prisma-data-proxy/prisma/schema.prisma
+        uses: actions/cache/save@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
         
       - name: deploy slack bot
+        id: deploy-slack-bot
         uses: cloudflare/wrangler-action@2.0.0
         with:
           wranglerVersion: '3.0.0'
@@ -41,5 +52,3 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
           SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          PLANET_SCALE_DB_URL: ${{ secrets.PLANET_SCALE_DB_URL }}

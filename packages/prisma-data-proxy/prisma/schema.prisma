@@ -9,21 +9,24 @@ datasource db {
 }
 
 model SlackStandUp {
-  id                  String                    @id @default(uuid()) @map("id")
-  createdAt           DateTime                  @default(now()) @map("created_at")
-  updatedAt           DateTime                  @updatedAt @map("updated_at")
-  name                String                    @map("name")
-  slackChannelId      String                    @map("slack_channel_id")
-  time                DateTime                  @map("time") @db.Time(0)
-  frequency           Frequency                 @map("frequency")
-  timezone            String                    @map("timezone")
-  slackTeamId         String                    @map("slack_team_id")
-  slackUserId         String                    @map("slack_user_id")
-  isJIRAIntegrationOn Boolean                   @default(false) @map("is_jira_integration_on")
-  participants        SlackStandUpParticipant[]
-  questions           SlackStandUpQuestion[]
-  responses           SlackStandUpResponse[]
+  id                             String                           @id @default(uuid()) @map("id")
+  createdAt                      DateTime                         @default(now()) @map("created_at")
+  updatedAt                      DateTime                         @updatedAt @map("updated_at")
+  name                           String                           @map("name")
+  slackChannelId                 String                           @map("slack_channel_id")
+  time                           DateTime                         @map("time") @db.Time(0)
+  frequency                      Frequency                        @map("frequency")
+  timezone                       String                           @map("timezone")
+  slackTeamId                    String                           @map("slack_team_id")
+  slackUserId                    String                           @map("slack_user_id")
+  isJIRAIntegrationOn            Boolean                          @default(false) @map("is_jira_integration_on")
+  participants                   SlackStandUpParticipant[]
+  questions                      SlackStandUpQuestion[]
+  responses                      SlackStandUpResponse[]
+  SlackActiveStandUpConversation SlackActiveStandUpConversation[]
 
+  @@index([slackTeamId], name: "slack_stand_ups_slack_team_id")
+  @@index([slackUserId], name: "slack_stand_ups_slack_user_id")
   @@map("slack_stand_ups")
 }
 
@@ -36,6 +39,7 @@ model SlackStandUpParticipant {
   slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
 
   @@unique([slackUserId, slackStandUpId])
+  @@index([slackStandUpId], name: "slack_stand_up_participants_slack_stand_up_id")
   @@map("slack_stand_up_participants")
 }
 
@@ -47,6 +51,7 @@ model SlackStandUpQuestion {
   slackStandUpId String       @map("slack_stand_up_id")
   slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
 
+  @@index([slackStandUpId], name: "slack_stand_up_questions_slack_stand_up_id")
   @@map("slack_stand_up_questions")
 }
 
@@ -63,6 +68,7 @@ model SlackStandUpResponse {
   updates        SlackStandUpUpdate[]
 
   @@unique([slackUserId, slackStandUpId, date])
+  @@index([slackStandUpId], name: "slack_stand_up_responses_slack_stand_up_id")
   @@map("slack_stand_up_responses")
 }
 
@@ -75,6 +81,7 @@ model SlackStandUpUpdate {
   slackStandUpResponseId String               @map("slack_stand_up_response_id")
   slackStandUpResponse   SlackStandUpResponse @relation(fields: [slackStandUpResponseId], references: [id], onDelete: Cascade)
 
+  @@index([slackStandUpResponseId], name: "slack_stand_up_updates_slack_stand_up_response_id")
   @@map("slack_stand_up_updates")
 }
 
@@ -82,4 +89,24 @@ enum Frequency {
   MONDAY_TO_FRIDAY
   MONDAY_TO_SATURDAY
   EVERYDAY
+}
+
+// A active stand up conversation is a conversation between a user and the bot.
+// A user can have only one active stand up conversation at a time.
+// This is used as a cache to store the active stand up conversation.
+// As Worker KV is eventually consistent, and it might take some time for the
+// active stand up conversation to be updated in the KV, we use this table to
+// store the active stand up conversation.
+model SlackActiveStandUpConversation {
+  id               String       @id @default(uuid()) @map("id")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  slackUserId      String       @map("slack_user_id")
+  conversationDOId String       @map("conversation_do_id")
+  slackStandUpId   String       @map("slack_stand_up_id")
+  slackStandUp     SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
+
+  @@unique([slackUserId])
+  @@index([slackUserId], name: "slack_active_stand_up_conversations_slack_user_id")
+  @@index([slackStandUpId], name: "slack_active_stand_up_conversations_slack_stand_up_id")
+  @@map("slack_active_stand_up_conversations")
 }

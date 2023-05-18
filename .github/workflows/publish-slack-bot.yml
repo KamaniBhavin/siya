@@ -1,0 +1,32 @@
+name: Publish Slack Bot
+
+on:
+  push:
+    branches:
+      - main
+        
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Publish Slack Bot
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: publish
+          secrets: |
+            DATABASE_URL
+            SLACK_CLIENT_SECRET
+            SLACK_SIGNING_SECRET
+            SENTRY_DSN
+          preCommands: |
+            npm run setup
+            npx prisma db push 
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

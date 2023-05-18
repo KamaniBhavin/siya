@@ -20,23 +20,16 @@ jobs:
         id: restore-cache
         uses: actions/cache@v2
         with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-restore-cache-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-restore-cache-
           
       - name: install dependencies
         id: install-dependencies
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
           npm run setup
-          npx prisma db push --schema=packages/prisma-data-proxy/prisma/schema.prisma
-
-      - name: cache
-        id: cache
-        uses: actions/cache/save@v2
-        if: steps.restore-cache.outputs.cache-hit != 'true'
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
         
       - name: deploy slack bot
         id: deploy-slack-bot
@@ -52,6 +45,8 @@ jobs:
             SLACK_CLIENT_SECRET
             SLACK_SIGNING_SECRET
             SENTRY_DSN
+          preCommands: |
+            npx prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}

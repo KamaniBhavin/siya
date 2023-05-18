@@ -29,9 +29,7 @@ jobs:
         id: install-dependencies
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
-          npm install
-          npx prisma generate --data-proxy
-          npm run bootstrap
+          npm run setup
         
       - name: deploy slack bot
         id: deploy-slack-bot
@@ -49,6 +47,7 @@ jobs:
             SENTRY_DSN
           preCommands: |
             npx prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
+            npx prisma generate --schema=../prisma-data-proxy/prisma/schema.prisma --data-proxy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}

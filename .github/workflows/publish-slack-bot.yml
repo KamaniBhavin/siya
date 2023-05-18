@@ -19,7 +19,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: packages/slack-bot
-          commands: deploy 
+          command: deploy 
           secrets: |
             DATABASE_URL
             SLACK_CLIENT_SECRET

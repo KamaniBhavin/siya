@@ -11,9 +11,11 @@ jobs:
     name: Publish Slack Bot
     steps:
       - uses: actions/checkout@v2
+        
       - name: Publish
         uses: cloudflare/wrangler-action@2.0.0
         with:
+          wranglerVersion: '3.0.0'
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           secrets: |
@@ -24,6 +26,7 @@ jobs:
           preCommands: |
             npm install prisma lerna -g
             prisma db push --schema=packages/prisma-data-proxy/prisma/schema.prisma
+            chmod -R 777 node_modules/.cache
             lerna run deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

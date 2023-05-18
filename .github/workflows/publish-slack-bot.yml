@@ -1,4 +1,4 @@
-name: Publish Slack Bot
+name: Deploy Slack Bot
 
 on:
   push:
@@ -8,26 +8,35 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Publish Slack Bot
+    name: Deploy Slack Bot
     steps:
       - uses: actions/checkout@v2
         
-      - name: Publish
+      - name: restore cache
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          
+      - name: install dependencies and cache
+        if: steps.restore-lerna.outputs.cache-hit != 'true'
+        run: |
+          npm run setup
+        
+      - name: deploy
         uses: cloudflare/wrangler-action@2.0.0
         with:
           wranglerVersion: '3.0.0'
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: packages/slack-bot
-          command: deploy 
           secrets: |
             DATABASE_URL
             SLACK_CLIENT_SECRET
             SLACK_SIGNING_SECRET
             SENTRY_DSN
           preCommands: |
-            npm install
             npx prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
+            npx lerna run deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}

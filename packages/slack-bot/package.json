@@ -18,7 +18,7 @@
     "precommit": "lint-staged",
     "lint": "eslint . --ext .ts",
     "start": "wrangler dev",
-    "deploy": "wrangler publish",
+    "deploy": "wrangler deploy",
     "test": "NODE_OPTIONS=--experimental-vm-modules vitest --run"
   },
   "dependencies": {

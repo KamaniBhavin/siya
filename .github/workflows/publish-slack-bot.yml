@@ -23,13 +23,17 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
           
-      - name: install dependencies and cache
+      - name: install dependencies
         id: install-dependencies
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
           npm run setup
           npx prisma db push --schema=packages/prisma-data-proxy/prisma/schema.prisma
+
+      - name: cache
+        id: cache
         uses: actions/cache/save@v2
+        if: steps.restore-cache.outputs.cache-hit != 'true'
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}

@@ -20,7 +20,7 @@ jobs:
         id: restore-cache
         uses: actions/cache@v2
         with:
-          path: ~/.npm
+          path: node_modules
           key: ${{ runner.os }}-restore-cache-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-restore-cache-

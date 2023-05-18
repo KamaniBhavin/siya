@@ -30,3 +30,4 @@ jobs:
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
           SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          PLANET_SCALE_DB_URL: ${{ secrets.PLANET_SCALE_DB_URL }}

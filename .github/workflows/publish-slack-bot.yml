@@ -22,21 +22,21 @@ jobs:
         if: steps.restore-lerna.outputs.cache-hit != 'true'
         run: |
           npm run setup
+          npx prisma db push --schema=packages/prisma-data-proxy/prisma/schema.prisma
         
-      - name: deploy
+      - name: deploy slack bot
         uses: cloudflare/wrangler-action@2.0.0
         with:
           wranglerVersion: '3.0.0'
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: packages/slack-bot
+          command: deploy
           secrets: |
             DATABASE_URL
             SLACK_CLIENT_SECRET
             SLACK_SIGNING_SECRET
             SENTRY_DSN
-          preCommands: |
-            npx prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
-            npx lerna run deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}

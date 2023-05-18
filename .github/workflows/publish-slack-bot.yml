@@ -26,8 +26,8 @@ jobs:
             SLACK_SIGNING_SECRET
             SENTRY_DSN
           preCommands: |
-            npm install prisma -g
-            prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
+            npm install
+            npx prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}

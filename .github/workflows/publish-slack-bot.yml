@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-restore-cache-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-restore-cache-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-restore-cache-
           
@@ -29,7 +29,9 @@ jobs:
         id: install-dependencies
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
-          npm run setup
+          npm install
+          npx prisma generate --data-proxy
+          npm run bootstrap
         
       - name: deploy slack bot
         id: deploy-slack-bot

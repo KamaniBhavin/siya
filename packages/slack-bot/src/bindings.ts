@@ -13,5 +13,4 @@ export type Bindings = {
   SLACK_STAND_UP_REMINDER_DO: DurableObjectNamespace;
   SLACK_STAND_UP_BRIEF_DO: DurableObjectNamespace;
   SLACK_STAND_UP_CONVERSATION_DO: DurableObjectNamespace;
-  SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS: KVNamespace;
 };

@@ -6,6 +6,7 @@ import {
   ISlackStandUpParticipantResponse,
   IStandUpResponse,
 } from './stand_up_brief_do';
+import { db } from '../../../prisma-data-proxy';
 
 /************************* Types *************************/
 export type SlackStandUpConversationDORequest =
@@ -128,10 +129,13 @@ export class SlackStandUpConversationDO {
     // Add the participant to the list of active conversations.
     // This helps us to locate this DO when the participant sends a message in bot DM.
     // Also, this helps us know if the participant is already in a conversation.
-    await this._env.SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS.put(
-      participantSlackId,
-      this._id.toString(),
-    );
+    await db(this._env.DATABASE_URL).slackActiveStandUpConversation.create({
+      data: {
+        slackUserId: participantSlackId,
+        conversationDOId: this._id.toString(),
+        slackStandUpId: this._data.standUpId,
+      },
+    });
 
     const slackClient = new Slack(token);
     await slackClient.postMessage({
@@ -225,9 +229,11 @@ export class SlackStandUpConversationDO {
     await this._persist();
 
     // Remove the participant from the list of active conversations.
-    await this._env.SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS.delete(
-      participantSlackId,
-    );
+    await db(this._env.DATABASE_URL).slackActiveStandUpConversation.delete({
+      where: {
+        slackUserId: participantSlackId,
+      },
+    });
 
     // Send a message to the user that their response has been recorded.
     const token = z

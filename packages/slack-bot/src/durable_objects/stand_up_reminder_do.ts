@@ -6,6 +6,7 @@ import { standUpOnBoardingMessage } from '../ui/stand_up_on_boarding_message';
 import { DateTime, DurationLike } from 'luxon';
 import { slackStandUpReminderMessage } from '../ui/stand_up_reminder_message';
 import { ISlackMessageResponse } from '../client/types';
+import { db } from '../../../prisma-data-proxy';
 
 /************************* Types *************************/
 export type ISlackStandUpReminderDORequest =
@@ -64,10 +65,13 @@ export class SlackStandUpReminderDO {
     const { participantSlackId, frequency, slackTeamId, timezone } = this._data;
 
     // Check if the participant is active in any other stand up conversation
-    const isInActiveConversation =
-      await this._env.SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS.get(
-        participantSlackId,
-      );
+    const isInActiveConversation = await db(
+      this._env.DATABASE_URL,
+    ).slackActiveStandUpConversation.count({
+      where: {
+        slackUserId: participantSlackId,
+      },
+    });
 
     // If the participant is active in any other stand up conversation, reschedule the reminder
     // to 5 minutes later

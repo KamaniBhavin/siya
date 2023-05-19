@@ -8,6 +8,7 @@ import { ISlackStandUpReminderDORequest } from '../durable_objects/stand_up_remi
 import { Slack } from '../client/slack';
 import { z } from 'zod';
 import { isInActiveConversationModal } from '../ui/is_in_active_conversation_modal';
+import { db } from '../../../prisma-data-proxy';
 
 export async function handleBlockActions(
   interaction: ISlackBlockAction,
@@ -76,11 +77,16 @@ export async function startStandUpConversationInDO(
     team: { id: slackTeamId },
   } = interaction;
 
-  const activeConversationDOId =
-    await env.SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS.get(slackUserId);
+  const isInActiveConversation = await db(
+    env.DATABASE_URL,
+  ).slackActiveStandUpConversation.count({
+    where: {
+      slackUserId: slackUserId,
+    },
+  });
 
   // If the user is already in a conversation, we don't want to start a new one
-  if (activeConversationDOId) {
+  if (isInActiveConversation) {
     const token = z.string().parse(await env.SLACK_BOT_TOKENS.get(slackTeamId));
 
     // Open a modal to inform the user that they are already in a conversation

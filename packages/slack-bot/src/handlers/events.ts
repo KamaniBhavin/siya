@@ -130,16 +130,22 @@ async function appHomeMessage(
   // A user can only have one active conversation at a time
   // If the user has an active conversation, we send the message to the DO
   // If not, we ignore the message
-  const conversationDOId =
-    await env.SLACK_STAND_UP_ACTIVE_USER_CONVERSATIONS.get(user);
+  const conversation = await db(
+    env.DATABASE_URL,
+  ).slackActiveStandUpConversation.findUnique({
+    where: {
+      slackUserId: user,
+    },
+  });
 
-  if (!conversationDOId) {
+  if (!conversation) {
     console.log(`No active conversation for user ${user}`);
     return new Response(null, { status: 200 });
   }
 
-  const doId =
-    env.SLACK_STAND_UP_CONVERSATION_DO.idFromString(conversationDOId);
+  const doId = env.SLACK_STAND_UP_CONVERSATION_DO.idFromString(
+    conversation.conversationDOId,
+  );
   const stub = await env.SLACK_STAND_UP_CONVERSATION_DO.get(doId);
 
   const request = new Request(env.SIYA_API_URL, {

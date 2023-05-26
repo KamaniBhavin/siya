@@ -120,7 +120,7 @@ model AtlassianApiToken {
   slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
   projectId      String       @map("project_id")
   email          String       @map("email")
-  token          String       @map("token")
+  token          String       @map("token") @db.VarChar(512)
 
   @@unique([slackUserId, slackStandUpId])
   @@index([slackUserId, slackStandUpId], name: "atlassian_api_tokens_slack_user_id_slack_stand_up_id")

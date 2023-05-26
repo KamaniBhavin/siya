@@ -10,7 +10,7 @@ export async function integration(context: Context<{ Bindings: Bindings }>) {
     api_key: apiKey,
     response_url: responseUrl,
     project_id: projectId,
-  } = IntegrationSchema.parse(context.req.query());
+  } = IntegrationSchema.parse(await context.req.json());
 
   // key is in the format of slackUserId@standUpId
   const [slackUserId, standUpId] = key.split('@');

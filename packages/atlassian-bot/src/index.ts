@@ -12,9 +12,9 @@ app.get('/ping', (c) => {
   return c.json({ message: 'pong' });
 });
 
-app.get(
+app.post(
   '/jira/integration',
-  zValidator('query', IntegrationSchema, (result, c) => {
+  zValidator('json', IntegrationSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }

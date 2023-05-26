@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { Bindings } from '../bindings';
-import { CreateSchema } from '../schemas/create';
+import { SlashCommandSchema } from '../schemas/create';
 import { z } from 'zod';
 import { Slack } from '../client/slack';
 import slackCreateStandUpModal from '../ui/create_stand_up_modal';
@@ -11,7 +11,7 @@ export async function create(context: Context<{ Bindings: Bindings }>) {
     trigger_id: triggerId,
     user_id: userId,
     team_id: teamId,
-  } = CreateSchema.parse(Object.fromEntries(form.entries()));
+  } = SlashCommandSchema.parse(Object.fromEntries(form.entries()));
 
   // This is non-blocking and will not block the response.
   context.executionCtx.waitUntil(

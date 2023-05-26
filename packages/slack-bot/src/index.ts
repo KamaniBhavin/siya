@@ -1,15 +1,16 @@
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { Bindings } from './bindings';
 import { sentry } from './middlewares/sentry';
 import { zValidator } from '@hono/zod-validator';
 import { AuthorizationSchema } from './schemas/authorization';
 import authorization from './handlers/authorization';
-import { CreateSchema } from './schemas/create';
+import { SlashCommandSchema } from './schemas/create';
 import { create } from './handlers/create';
 import { InteractionsSchema } from './schemas/interactions';
 import { interactions } from './handlers/interactions';
 import { EventSchema } from './schemas/events';
 import { events } from './handlers/events';
+import { jiraIntegration } from './handlers/jira_integration';
 
 const app = new Hono<{ Bindings: Bindings }>();
 // Register sentry middleware
@@ -33,7 +34,7 @@ app.get(
 // A Slack route to create a new stand-up
 app.post(
   '/create',
-  zValidator('form', CreateSchema, (result, c) => {
+  zValidator('form', SlashCommandSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }
@@ -63,6 +64,16 @@ app.post(
   events,
 );
 
+// A Slack shortcut route to add JIRA integration
+app.post(
+  '/jira-integration',
+  zValidator('form', SlashCommandSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  jiraIntegration,
+);
 export default app;
 
 /********************** Durable Objects **********************/

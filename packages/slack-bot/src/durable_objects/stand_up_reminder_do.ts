@@ -7,6 +7,7 @@ import { DateTime, DurationLike } from 'luxon';
 import { slackStandUpReminderMessage } from '../ui/stand_up_reminder_message';
 import { ISlackMessageResponse } from '../client/types';
 import { db } from '../../../prisma-data-proxy';
+import { jiraIntegrationMessage } from '../ui/jira_integration_message';
 
 /************************* Types *************************/
 export type ISlackStandUpReminderDORequest =
@@ -170,6 +171,7 @@ export class SlackStandUpReminderDO {
     const {
       name,
       remindAt,
+      standUpId,
       standUpAt,
       slackTeamId,
       slackChannelId,
@@ -182,11 +184,18 @@ export class SlackStandUpReminderDO {
 
     await this._storage.setAlarm(remindAt);
 
-    // Send an onboarding message to the participant.
     const slackClient = new Slack(token);
+
+    // Send an onboarding message to the participant.
     await slackClient.postMessage({
       channel: participantSlackId,
       blocks: standUpOnBoardingMessage(name, slackChannelId, standUpAt).blocks,
+    });
+
+    // Send a jira integration feature message to the participant.
+    await slackClient.postMessage({
+      channel: participantSlackId,
+      blocks: jiraIntegrationMessage(standUpId, participantSlackId).blocks,
     });
   }
 

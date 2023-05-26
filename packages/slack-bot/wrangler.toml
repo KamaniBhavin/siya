@@ -16,10 +16,11 @@ bindings = [
 ]
 
 [vars]
-SIYA_API_URL = "https://siya-slack-bot.bhavinkamani.workers.dev"
+SIYA_SLACK_BOT_API_URL = "https://siya-slack-bot.bhavinkamani.workers.dev"
 SLACK_API_URL = "https://slack.com/api"
 SLACK_APP_ID = "A04UP8F9THA"
 SLACK_CLIENT_ID = "4975212221364.4975287333588"
+SIYA_ATLASSIAN_BOT_API_URL = "https://siya-atlassian-bot.bhavinkamani.workers.dev"
 
 [[migrations]]
 tag = "v0.0.1"

@@ -1,4 +1,4 @@
-name: Deploy Slack Bot
+name: Deploy Bots
 
 on:
   push:
@@ -8,9 +8,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy Slack Bot
+    name: Deploy Bots
     env:
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PLANET_SCALE_DB_URL: ${{ secrets.PLANET_SCALE_DB_URL }}
       
     steps:
@@ -30,8 +31,14 @@ jobs:
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
           npm run setup
+          
+      - name: Run Prisma migrations
+        id: run-prisma-migrations
+        run: |
+          npx prisma db push --schema=packages/prisma-data-proxy/prisma/schema.prisma
+          npx prisma generate --schema=packages/prisma-data-proxy/prisma/schema.prisma --data-proxy
         
-      - name: deploy slack bot
+      - name: Deploy Slack bot
         id: deploy-slack-bot
         uses: cloudflare/wrangler-action@2.0.0
         with:
@@ -45,10 +52,19 @@ jobs:
             SLACK_CLIENT_SECRET
             SLACK_SIGNING_SECRET
             SENTRY_DSN
-          preCommands: |
-            npx prisma db push --schema=../prisma-data-proxy/prisma/schema.prisma
-            npx prisma generate --schema=../prisma-data-proxy/prisma/schema.prisma --data-proxy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
           SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          
+      - name: Deploy Atlassian bot
+        id: deploy-atlassian-bot
+        uses: cloudflare/wrangler-action@2.0.0
+        with: 
+          wranglerVersion: '3.0.0'
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: packages/atlassian-bot
+          command: deploy
+          secrets: |
+            DATABASE_URL
+            SENTRY_DSN

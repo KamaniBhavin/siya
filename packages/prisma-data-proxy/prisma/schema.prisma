@@ -19,11 +19,11 @@ model SlackStandUp {
   timezone                       String                           @map("timezone")
   slackTeamId                    String                           @map("slack_team_id")
   slackUserId                    String                           @map("slack_user_id")
-  isJIRAIntegrationOn            Boolean                          @default(false) @map("is_jira_integration_on")
   participants                   SlackStandUpParticipant[]
   questions                      SlackStandUpQuestion[]
   responses                      SlackStandUpResponse[]
   SlackActiveStandUpConversation SlackActiveStandUpConversation[]
+  AtlassianApiToken              AtlassianApiToken[]
 
   @@index([slackTeamId], name: "slack_stand_ups_slack_team_id")
   @@index([slackUserId], name: "slack_stand_ups_slack_user_id")
@@ -109,4 +109,21 @@ model SlackActiveStandUpConversation {
   @@index([slackUserId], name: "slack_active_stand_up_conversations_slack_user_id")
   @@index([slackStandUpId], name: "slack_active_stand_up_conversations_slack_stand_up_id")
   @@map("slack_active_stand_up_conversations")
+}
+
+model AtlassianApiToken {
+  id             String       @id @default(uuid()) @map("id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  slackUserId    String       @map("slack_user_id")
+  slackStandUpId String       @map("slack_stand_up_id")
+  slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
+  projectId      String       @map("project_id")
+  email          String       @map("email")
+  token          String       @map("token")
+
+  @@unique([slackUserId, slackStandUpId])
+  @@index([slackUserId, slackStandUpId], name: "atlassian_api_tokens_slack_user_id_slack_stand_up_id")
+  @@index([slackStandUpId], name: "atlassian_api_tokens_slack_stand_up_id")
+  @@map("atlassian_api_tokens")
 }

@@ -17,6 +17,7 @@ import { ISlackStandUpReminderDORequest } from '../durable_objects/stand_up_remi
 import { SlackStandUpBriefDORequest } from '../durable_objects/stand_up_brief_do';
 import { ISlackStandUpConversationInitDORequest } from '../durable_objects/slack_stand_up_conversation_do';
 import { publishHome } from '../handlers/events';
+import { jiraIntegrationMessage } from '../ui/jira_integration_message';
 
 export async function createStandUp(
   interaction: ISlackViewSubmission<SlackCreateStandUpModalState>,
@@ -155,7 +156,7 @@ async function initializeSlackStandUpReminderDOs(
       );
       const stub = await env.SLACK_STAND_UP_REMINDER_DO.get(doId);
 
-      const request = new Request(env.SIYA_API_URL, {
+      const request = new Request(env.SIYA_SLACK_BOT_API_URL, {
         method: 'POST',
         body: JSON.stringify(<ISlackStandUpReminderDORequest>{
           type: 'initialize',
@@ -186,7 +187,7 @@ async function initializeSlackStandUpBriefDO(
   const doId = env.SLACK_STAND_UP_BRIEF_DO.idFromName(standUp.id);
   const stub = await env.SLACK_STAND_UP_BRIEF_DO.get(doId);
 
-  const request = new Request(env.SIYA_API_URL, {
+  const request = new Request(env.SIYA_SLACK_BOT_API_URL, {
     method: 'POST',
     body: JSON.stringify(<SlackStandUpBriefDORequest>{
       type: 'initialize',
@@ -216,7 +217,7 @@ async function initializeSlackStandUpConversationDO(
       );
       const stub = await env.SLACK_STAND_UP_CONVERSATION_DO.get(doId);
 
-      const request = new Request(env.SIYA_API_URL, {
+      const request = new Request(env.SIYA_SLACK_BOT_API_URL, {
         method: 'POST',
         body: JSON.stringify(<ISlackStandUpConversationInitDORequest>{
           type: 'initialize',

@@ -170,7 +170,9 @@ export interface ISlackBlockAction extends ISlackInteraction {
       | 'delete_stand_up'
       | 'submit_stand_up'
       | 'skip_stand_up'
-      | 'on_leave';
+      | 'on_leave'
+      | 'jira_integration'
+      | 'cancel_integration';
     block_id: 'main';
     text: {
       type: 'plain_text' | 'mrkdwn';
@@ -179,6 +181,10 @@ export interface ISlackBlockAction extends ISlackInteraction {
     };
     value: string;
   }[];
+}
+
+export interface ISlackMessageBlockAction<State> extends ISlackBlockAction {
+  state: State;
 }
 
 /********* Slack Responses *********/

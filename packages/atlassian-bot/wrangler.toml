@@ -1,3 +1,7 @@
 name = "siya-atlassian-bot"
 main = "src/index.ts"
 compatibility_date = "2023-04-19"
+
+kv_namespaces = [
+  { binding = "ATLASSIAN_TOKEN_PAIRS", id = "c82d0b502c2f413a9b8b943874a69d17", preview_id = "04a29bb8947b40bf89678b4c4c5a9768" }
+]

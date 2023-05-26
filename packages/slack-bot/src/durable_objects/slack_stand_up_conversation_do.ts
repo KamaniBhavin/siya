@@ -27,6 +27,7 @@ export interface ISlackStandUpConversationResponse {
 }
 
 export interface ISlackStandUpConversationDOData {
+  timezone: string;
   standUpId: string;
   slackTeamId: string;
   participantSlackId: string;
@@ -94,6 +95,7 @@ export class SlackStandUpConversationDO {
   private async _initialize(body: ISlackStandUpConversationInitDORequest) {
     // immutable data of the DO
     this._data = <ISlackStandUpConversationDOData>{
+      timezone: body.standUp.timezone,
       standUpId: body.standUp.id,
       slackTeamId: body.standUp.slackTeamId,
       participantSlackId: body.participantSlackId,
@@ -201,7 +203,7 @@ export class SlackStandUpConversationDO {
       throw new Error('Cannot end conversation. DO not initialized');
     }
 
-    const { SIYA_API_URL } = this._env;
+    const { SIYA_SLACK_BOT_API_URL } = this._env;
     const { standUpId, slackTeamId, participantSlackId } = this._data;
     const { responses } = this._state;
 
@@ -209,7 +211,7 @@ export class SlackStandUpConversationDO {
     const doId = this._env.SLACK_STAND_UP_BRIEF_DO.idFromName(standUpId);
     const stub = this._env.SLACK_STAND_UP_BRIEF_DO.get(doId);
 
-    const request = new Request(SIYA_API_URL, {
+    const request = new Request(SIYA_SLACK_BOT_API_URL, {
       method: 'POST',
       body: JSON.stringify(<ISlackStandUpParticipantResponse>{
         type: 'response',
@@ -244,6 +246,46 @@ export class SlackStandUpConversationDO {
     await slackClient.postMessage({
       channel: participantSlackId,
       text: 'Your response has been recorded :tada:',
+    });
+
+    // Check if the participant has Jira integration enabled.
+    const atlassianApiData = await db(
+      this._env.DATABASE_URL,
+    ).atlassianApiToken.findFirst({
+      where: {
+        slackUserId: participantSlackId,
+        slackStandUpId: standUpId,
+      },
+    });
+
+    // If the participant does not have Jira integration enabled, return.
+    if (!atlassianApiData) {
+      return new Response(null, { status: 200 });
+    }
+
+    // Send responses to Atlassian bot.
+    // Atlassian bot will parse the responses and create a work log.
+    // It will push the work log to Jira.
+    const url = `${this._env.SIYA_ATLASSIAN_BOT_API_URL}/jira/add-work-logs`;
+    const workLogRequest = new Request(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        projectId: atlassianApiData.projectId,
+        apiToken: atlassianApiData.token,
+        timezone: this._data.timezone,
+        logs: responses.map((response) => response.response),
+      }),
+    });
+
+    // Atlassian bot will send a message with the status of the work log.
+    // This is to ensure that the participant is aware of the status of their work log.
+    const workLogResponse = await fetch(workLogRequest);
+    const { message } = await workLogResponse.json<{ message: string }>();
+
+    // Forward the message to the participant's Bot DM.
+    await slackClient.postMessage({
+      channel: participantSlackId,
+      text: message,
     });
 
     return new Response(null, { status: 200 });

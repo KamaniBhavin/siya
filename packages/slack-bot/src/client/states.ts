@@ -59,3 +59,31 @@ export const SlackCreateStandUpModalStateSchema = z.object({
 export type SlackCreateStandUpModalState = z.infer<
   typeof SlackCreateStandUpModalStateSchema
 >;
+
+/************ JIRA integration message state ************/
+export const SlackJiraIntegrationMessageStateSchema = z.object({
+  values: z.object({
+    project_id_input: z.object({
+      project_id_action: z.object({
+        type: z.literal('plain_text_input'),
+        value: z.string(),
+      }),
+    }),
+    email_input: z.object({
+      email_action: z.object({
+        type: z.literal('plain_text_input'),
+        value: z.string(),
+      }),
+    }),
+    api_key_input: z.object({
+      api_key_action: z.object({
+        type: z.literal('plain_text_input'),
+        value: z.string(),
+      }),
+    }),
+  }),
+});
+
+export type SlackJiraIntegrationMessageState = z.infer<
+  typeof SlackJiraIntegrationMessageStateSchema
+>;

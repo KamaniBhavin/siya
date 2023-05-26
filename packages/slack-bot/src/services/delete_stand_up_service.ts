@@ -37,7 +37,9 @@ export async function deleteStandUp(
     compositeIds.map(async (id) => {
       const doId = env.SLACK_STAND_UP_REMINDER_DO.idFromName(id);
       const doStub = await env.SLACK_STAND_UP_REMINDER_DO.get(doId);
-      await doStub.fetch(new Request(env.SIYA_API_URL, { method: 'DELETE' }));
+      await doStub.fetch(
+        new Request(env.SIYA_SLACK_BOT_API_URL, { method: 'DELETE' }),
+      );
     }),
   );
 
@@ -46,14 +48,18 @@ export async function deleteStandUp(
     compositeIds.map(async (id) => {
       const doId = env.SLACK_STAND_UP_CONVERSATION_DO.idFromName(id);
       const doStub = await env.SLACK_STAND_UP_CONVERSATION_DO.get(doId);
-      await doStub.fetch(new Request(env.SIYA_API_URL, { method: 'DELETE' }));
+      await doStub.fetch(
+        new Request(env.SIYA_SLACK_BOT_API_URL, { method: 'DELETE' }),
+      );
     }),
   );
 
   // Make a request to the Brief DO API to delete itself
   const doId = env.SLACK_STAND_UP_BRIEF_DO.idFromName(standUp.id);
   const doStub = await env.SLACK_STAND_UP_BRIEF_DO.get(doId);
-  await doStub.fetch(new Request(env.SIYA_API_URL, { method: 'DELETE' }));
+  await doStub.fetch(
+    new Request(env.SIYA_SLACK_BOT_API_URL, { method: 'DELETE' }),
+  );
 
   // Delete the stand-up from the database
   await prisma.slackStandUp.delete({

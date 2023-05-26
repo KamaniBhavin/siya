@@ -148,7 +148,7 @@ async function appHomeMessage(
   );
   const stub = await env.SLACK_STAND_UP_CONVERSATION_DO.get(doId);
 
-  const request = new Request(env.SIYA_API_URL, {
+  const request = new Request(env.SIYA_SLACK_BOT_API_URL, {
     method: 'POST',
     body: JSON.stringify(<SlackStandUpConversationDORequest>{
       type: 'response',

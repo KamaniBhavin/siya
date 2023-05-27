@@ -38,7 +38,7 @@ export async function addWorkLogs(context: Context<{ Bindings: Bindings }>) {
         timeSpent: timeSpent,
         started: DateTime.fromFormat(started, 't')
           .setZone(timezone)
-          .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"),
+          .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZ"),
         comment: comment,
       };
 

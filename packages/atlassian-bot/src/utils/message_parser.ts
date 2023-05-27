@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const MessageSchema = z.object({
   issueId: z.string(),
-  startedAt: z.string(),
+  started: z.string(),
   week: z.string().nullish(),
   day: z.string().nullish(),
   hour: z.string().nullish(),
@@ -12,7 +12,7 @@ const MessageSchema = z.object({
 
 export function parseWorkLog(log: string) {
   const regex =
-    /\[\[(?<issueId>\w+-\d+)\s*\|\s*(?<startedAt>\d{1,2}:\d{2}\s*(AM|PM))\s*\|\s*((?<week>\d{1,2})w)?\s*((?<day>\d{1,2})d)?\s*((?<hour>\d{1,2})h)?\s*((?<minute>\d{1,2})m)?\s*\|?\s*(?<description>.*)\s*]]/;
+    /\[\[(?<issueId>\w+-\d+)\s*\|\s*(?<started>\d{1,2}:\d{2}\s*(AM|PM))\s*\|\s*((?<week>\d{1,2})w)?\s*((?<day>\d{1,2})d)?\s*((?<hour>\d{1,2})h)?\s*((?<minute>\d{1,2})m)?\s*\|?\s*(?<description>.*)\s*]]/;
 
   if (!regex.test(log)) {
     return null;
@@ -24,9 +24,13 @@ export function parseWorkLog(log: string) {
     return null;
   }
 
-  const { issueId, startedAt, week, day, hour, minute, description } =
-    MessageSchema.parse(match.groups);
+  const parse = MessageSchema.safeParse(match.groups);
 
+  if (!parse.success) {
+    return null;
+  }
+
+  const { issueId, started, week, day, hour, minute, description } = parse.data;
   const w = week ? parseInt(week) : 0;
   const d = day ? parseInt(day) : 0;
   const h = hour ? parseInt(hour) : 0;
@@ -34,9 +38,8 @@ export function parseWorkLog(log: string) {
 
   return {
     issueId: issueId,
-    startedAt: startedAt,
-    timeSpentSeconds:
-      w * 7 * 24 * 60 * 60 + d * 24 * 60 * 60 + h * 60 * 60 + m * 60,
+    started: started,
+    timeSpent: `${w}w ${d}d ${h}h ${m}m`,
     comment: description,
   };
 }

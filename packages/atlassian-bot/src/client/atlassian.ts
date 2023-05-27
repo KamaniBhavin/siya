@@ -115,9 +115,8 @@ export class Atlassian {
 
     // Handle errors
     if (!response.ok) {
-      throw new Error(
-        `Atlassian API error: ${JSON.stringify(response, null, 2)}`,
-      );
+      const error = JSON.stringify(await response.json(), null, 2);
+      throw new Error(`Atlassian API error: [${response.status}] - ${error}`);
     }
 
     return response.json();

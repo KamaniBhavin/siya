@@ -19,7 +19,9 @@ export async function addWorkLogs(context: Context<{ Bindings: Bindings }>) {
     )
     .flat();
 
-  const parsedWorkLogs = workLogs.map((log) => parseWorkLog(log));
+  const parsedWorkLogs = workLogs
+    .map((log) => parseWorkLog(log))
+    .filter((x): x is { issueId: string } & AtlassianWorkLog => !!x);
 
   if (!parsedWorkLogs) {
     return context.json({
@@ -31,17 +33,16 @@ export async function addWorkLogs(context: Context<{ Bindings: Bindings }>) {
   const atlassianClient = new Atlassian(projectId, apiToken);
   await Promise.all(
     parsedWorkLogs.map(async (logs) => {
-      if (logs) {
-        const { issueId, timeSpentSeconds, startedAt, comment } = logs;
-        await atlassianClient.createWorkLog({ issueId }, <AtlassianWorkLog>{
-          timeSpentSeconds: timeSpentSeconds,
-          started: DateTime.fromFormat(startedAt, 't')
-            .setZone(timezone)
-            .minus({ days: 1 })
-            .toISO(),
-          comment: comment,
-        });
-      }
+      const { issueId, timeSpent, started, comment } = logs;
+      const workLog: AtlassianWorkLog = {
+        timeSpent: timeSpent,
+        started: DateTime.fromFormat(started, 't')
+          .setZone(timezone)
+          .toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"),
+        comment: comment,
+      };
+
+      await atlassianClient.createWorkLog({ issueId }, workLog);
     }),
   );
 

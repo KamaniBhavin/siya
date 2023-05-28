@@ -5,6 +5,7 @@ import { DateTime, DurationLike } from 'luxon';
 import { Bindings } from '../bindings';
 import { standUpParticipantResponseMessage } from '../ui/stand_up_participant_response_message';
 import { standUpBriefMessage } from '../ui/stand_up_brief_message';
+import { db } from '../../../prisma-data-proxy';
 
 /*********************** Types ***********************/
 export type SlackStandUpBriefDORequest =
@@ -34,6 +35,7 @@ export const StandUpResponseSchema = z.object({
 export type IStandUpResponse = z.infer<typeof StandUpResponseSchema>;
 
 export interface ISlackStandUpBriefDOData {
+  standUpId: string;
   slackChannelId: string;
   slackTeamId: string;
   standUpAt: number;
@@ -151,8 +153,14 @@ export class SlackStandUpBriefDO {
   }
 
   private async _initialize(data: ISlackStandUpBriefDOInitRequest) {
-    const { time, timezone, slackTeamId, slackChannelId, participants } =
-      data.standUp;
+    const {
+      id: standUpId,
+      time,
+      timezone,
+      slackTeamId,
+      slackChannelId,
+      participants,
+    } = data.standUp;
 
     const standUpTime = new Date(time);
     const standUpAt = DateTime.now()
@@ -165,6 +173,7 @@ export class SlackStandUpBriefDO {
     const participantsSlackIds = participants.map((p) => p.slackUserId);
 
     this._data = <ISlackStandUpBriefDOData>{
+      standUpId,
       slackChannelId,
       slackTeamId,
       standUpAt,
@@ -191,6 +200,33 @@ export class SlackStandUpBriefDO {
     if (!this._data || !this._state) {
       throw new Error('Data or state not initialized');
     }
+
+    // Flush the response of the participant to the database
+    // This is maintained to keep track of the responses of the participant
+    // Also, this is used to send a monthly summary of the participant's responses
+    await db(this._env.DATABASE_URL).slackStandUpResponse.create({
+      include: {
+        slackStandUp: true,
+      },
+      data: {
+        date: DateTime.now().toJSDate(),
+        slackUserId: response.participantSlackId,
+        slackStandUpId: this._data.standUpId,
+        skipped: response.data[0] === 'skip_stand_up',
+        onLeave: response.data[0] === 'on_leave',
+        updates: {
+          createMany: {
+            data:
+              response.data[0] === 'submit_stand_up'
+                ? response.data[1].map((u) => ({
+                    question: u.question,
+                    update: u.response,
+                  }))
+                : [],
+          },
+        },
+      },
+    });
 
     const { slackTeamId } = this._data;
     const token = z

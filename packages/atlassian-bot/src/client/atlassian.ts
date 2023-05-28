@@ -122,6 +122,10 @@ export class Atlassian {
     return response.json();
   }
 
+  async myself() {
+    return this._request('GET', new URL(`${this._apiUrl}/myself`), {});
+  }
+
   /**
    * Create a work log for an issue.
    *

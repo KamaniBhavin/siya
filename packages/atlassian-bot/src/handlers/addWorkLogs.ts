@@ -46,7 +46,7 @@ export async function addWorkLogs(context: Context<{ Bindings: Bindings }>) {
     }),
   );
 
-  if (parsedWorkLogs.length !== logs.length) {
+  if (parsedWorkLogs.length !== workLogs.length) {
     return context.json({
       message:
         'Some of the logs were not added. Please update them manually in JIRA`',

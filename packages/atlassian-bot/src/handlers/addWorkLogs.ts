@@ -34,15 +34,6 @@ export async function addWorkLogs(context: Context<{ Bindings: Bindings }>) {
   await Promise.all(
     parsedWorkLogs.map(async (logs) => {
       const { issueId, timeSpent, started, comment } = logs;
-
-      // Todo: Remove this
-      console.log({ issueId, timeSpent, started, comment, timezone });
-      console.log(
-        DateTime.fromFormat(started, 't', { zone: timezone }).toFormat(
-          "yyyy-MM-dd'T'HH:mm:ss.SSSZZZ",
-        ),
-      );
-
       const workLog: AtlassianWorkLog = {
         timeSpent: timeSpent,
         started: DateTime.fromFormat(started, 't', { zone: timezone }).toFormat(

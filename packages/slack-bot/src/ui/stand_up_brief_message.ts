@@ -117,7 +117,9 @@ function buildStandUpResponseBlocks(
 function responseText(responses: IStandUpResponse[]) {
   return responses
     .map((response) => {
-      return `- ${response.question} \n> ${response.response}`;
+      return `- ${response.question} \n> ${response.response
+        .split('\n')
+        .join('\n> ')}`;
     })
     .join('\n');
 }

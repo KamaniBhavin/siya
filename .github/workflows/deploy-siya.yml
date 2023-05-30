@@ -1,32 +1,36 @@
-name: Deploy Bots
+name: Deploy SIYA
 
 on:
   push:
     branches:
       - main
+      - development
         
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy Bots
+    permissions:
+      contents: read
+      deployments: write
+    name: Deploy SIYA
     env:
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PLANET_SCALE_DB_URL: ${{ secrets.PLANET_SCALE_DB_URL }}
       
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         
-      - name: restore cache
+      - name: Restore cache
         id: restore-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-restore-cache-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-restore-cache-
           
-      - name: install dependencies
+      - name: Install dependencies
         id: install-dependencies
         if: steps.restore-cache.outputs.cache-hit != 'true'
         run: |
@@ -68,3 +72,23 @@ jobs:
           secrets: |
             DATABASE_URL
             SENTRY_DSN
+            
+      - name: Build Siya site
+        id: build-siya-site
+        run: |
+          cd packages/siya-site
+          npm run build
+          
+      - name: Deploy Siya site
+        id: deploy-site
+        uses: cloudflare/pages-action@v1
+        with: 
+          wranglerVersion: '3'
+          projectName: siya-site
+          branch: main
+          directory: build
+          workingDirectory: packages/siya-site
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          

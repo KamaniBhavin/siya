@@ -6,7 +6,14 @@ const Configuration: UserConfig = {
     'scope-enum': [
       2,
       'always',
-      ['slack-bot', 'atlassian-bot', 'eslint-config', 'prisma-data-proxy', '*'],
+      [
+        'slack-bot',
+        'atlassian-bot',
+        'eslint-config',
+        'prisma-data-proxy',
+        'siya-site',
+        '*',
+      ],
     ],
   },
 };

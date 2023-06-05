@@ -64,7 +64,7 @@ model SlackStandUpResponse {
   slackStandUpId String               @map("slack_stand_up_id")
   skipped        Boolean?             @map("skipped")
   onLeave        Boolean?             @map("on_leave")
-  slackStandUp   SlackStandUp         @relation(fields: [slackStandUpId], references: [id])
+  slackStandUp   SlackStandUp         @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
   updates        SlackStandUpUpdate[]
 
   @@unique([slackUserId, slackStandUpId, date])

@@ -236,14 +236,20 @@ export class SlackStandUpReminderDO {
       throw new Error('Data must be initialized');
     }
 
-    const { hour, minute } = DateTime.fromMillis(this._data.remindAt).setZone(
-      this._data.timezone,
-    );
+    const { hour, minute, second } = DateTime.fromMillis(
+      this._data.remindAt,
+    ).setZone(this._data.timezone);
 
     const remindAt = DateTime.now()
       .setZone(this._data.timezone)
-      .set({ hour, minute })
+      .set({ hour, minute, second })
       .plus(duration || { days: 1 });
+
+    console.log(
+      `Rescheduling Stand-Up Reminder DO with id: ${
+        this._data.standUpId
+      } reminding at ${this._data.remindAt} to ${remindAt.toISO()}`,
+    );
 
     await this._storage.setAlarm(remindAt.toMillis());
   }

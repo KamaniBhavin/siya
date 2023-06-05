@@ -17,7 +17,6 @@ import { ISlackStandUpReminderDORequest } from '../durable_objects/stand_up_remi
 import { SlackStandUpBriefDORequest } from '../durable_objects/stand_up_brief_do';
 import { ISlackStandUpConversationInitDORequest } from '../durable_objects/slack_stand_up_conversation_do';
 import { publishHome } from '../handlers/events';
-import { jiraIntegrationMessage } from '../ui/jira_integration_message';
 
 export async function createStandUp(
   interaction: ISlackViewSubmission<SlackCreateStandUpModalState>,
@@ -133,13 +132,13 @@ async function initializeSlackStandUpReminderDOs(
     .concat(' ', timezone);
 
   // Creating a luxon DateTime object from the time of the stand-up.
-  const { hour, minute } = DateTime.fromJSDate(new Date(time));
+  const { hour, minute, second } = DateTime.fromJSDate(new Date(time));
 
   // The time to remind the user to do the stand-up. This is 30 minutes before
   // the stand-up time.
   let remindAt = DateTime.now()
     .setZone(timezone)
-    .set({ hour: hour, minute: minute })
+    .set({ hour: hour, minute: minute, second: second })
     .minus({ minutes: 30 });
 
   // If the remindAt time is in the past, then we need to remind the user

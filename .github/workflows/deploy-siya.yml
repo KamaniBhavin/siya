@@ -86,7 +86,7 @@ jobs:
           wranglerVersion: '3'
           projectName: siya-site
           branch: main
-          directory: build
+          directory: out
           workingDirectory: packages/siya-site
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

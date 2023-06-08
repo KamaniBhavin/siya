@@ -1,10 +1,11 @@
 
-const isProd = process.env.NODE_ENV === 'production';
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: 'build',
-  assetPrefix: isProd ? 'https://cdn.siya.bhavinkamani.com' : undefined,
+  output: 'export',
+  images: {
+    loader: 'custom',
+    loaderFile: './src/loaders/image.ts',
+  }
 }
 
 module.exports = nextConfig

@@ -22,8 +22,8 @@ model SlackStandUp {
   participants                   SlackStandUpParticipant[]
   questions                      SlackStandUpQuestion[]
   responses                      SlackStandUpResponse[]
-  SlackActiveStandUpConversation SlackActiveStandUpConversation[]
-  AtlassianApiToken              AtlassianApiToken[]
+  slackActiveStandUpConversation SlackActiveStandUpConversation[]
+  atlassianApiToken              AtlassianApiToken[]
 
   @@index([slackTeamId], name: "slack_stand_ups_slack_team_id")
   @@index([slackUserId], name: "slack_stand_ups_slack_user_id")

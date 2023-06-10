@@ -83,7 +83,7 @@ jobs:
         uses: cloudflare/pages-action@v1
         with: 
           wranglerVersion: '3'
-          projectName: siya-site
+          projectName: siya
           branch: main
           directory: out
           workingDirectory: packages/siya-site

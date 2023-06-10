@@ -110,16 +110,14 @@ function buildStandUpResponseBlocks(
  * @returns string
  *
  * @example
- *  - What did you do yesterday?
- *  > I worked on the stand-up feature
+ *  > What did you do yesterday?
+ *  I worked on the stand-up feature
  *
  */
 function responseText(responses: IStandUpResponse[]) {
   return responses
     .map((response) => {
-      return `- ${response.question} \n> ${response.response
-        .split('\n')
-        .join('\n> ')}`;
+      return `> ${response.question} \n ${response.response}`;
     })
     .join('\n');
 }

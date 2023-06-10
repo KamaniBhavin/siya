@@ -22,8 +22,8 @@ model SlackStandUp {
   participants                   SlackStandUpParticipant[]
   questions                      SlackStandUpQuestion[]
   responses                      SlackStandUpResponse[]
-  SlackActiveStandUpConversation SlackActiveStandUpConversation[]
-  AtlassianApiToken              AtlassianApiToken[]
+  slackActiveStandUpConversation SlackActiveStandUpConversation[]
+  atlassianApiToken              AtlassianApiToken[]
 
   @@index([slackTeamId], name: "slack_stand_ups_slack_team_id")
   @@index([slackUserId], name: "slack_stand_ups_slack_user_id")
@@ -64,7 +64,7 @@ model SlackStandUpResponse {
   slackStandUpId String               @map("slack_stand_up_id")
   skipped        Boolean?             @map("skipped")
   onLeave        Boolean?             @map("on_leave")
-  slackStandUp   SlackStandUp         @relation(fields: [slackStandUpId], references: [id])
+  slackStandUp   SlackStandUp         @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
   updates        SlackStandUpUpdate[]
 
   @@unique([slackUserId, slackStandUpId, date])
@@ -76,8 +76,8 @@ model SlackStandUpUpdate {
   id                     String               @id @default(uuid()) @map("id")
   createdAt              DateTime             @default(now()) @map("created_at")
   updatedAt              DateTime             @updatedAt @map("updated_at")
-  question               String               @map("question")
-  update                 String               @map("update")
+  question               String               @map("question") @db.Text
+  update                 String               @map("update") @db.Text
   slackStandUpResponseId String               @map("slack_stand_up_response_id")
   slackStandUpResponse   SlackStandUpResponse @relation(fields: [slackStandUpResponseId], references: [id], onDelete: Cascade)
 
@@ -120,7 +120,7 @@ model AtlassianApiToken {
   slackStandUp   SlackStandUp @relation(fields: [slackStandUpId], references: [id], onDelete: Cascade)
   projectId      String       @map("project_id")
   email          String       @map("email")
-  token          String       @map("token") @db.VarChar(512)
+  token          String       @map("token") @db.Text
 
   @@unique([slackUserId, slackStandUpId])
   @@index([slackUserId, slackStandUpId], name: "atlassian_api_tokens_slack_user_id_slack_stand_up_id")

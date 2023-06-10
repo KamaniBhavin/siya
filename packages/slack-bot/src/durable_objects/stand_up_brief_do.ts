@@ -269,14 +269,20 @@ export class SlackStandUpBriefDO {
       throw new Error('Data must be initialized');
     }
 
-    const { hour, minute } = DateTime.fromMillis(this._data.standUpAt).setZone(
-      this._data.timezone,
-    );
+    const { hour, minute, second } = DateTime.fromMillis(
+      this._data.standUpAt,
+    ).setZone(this._data.timezone);
 
     const nextStandUpAt = DateTime.now()
       .setZone(this._data.timezone)
-      .set({ hour, minute })
+      .set({ hour, minute, second })
       .plus(duration || { days: 1 });
+
+    console.log(
+      `Rescheduling Stand-Up Brief DO with id: ${
+        this._data.standUpId
+      } occurring at ${this._data.standUpAt} to ${nextStandUpAt.toISO()}`,
+    );
 
     await this._storage.setAlarm(nextStandUpAt.toMillis());
   }

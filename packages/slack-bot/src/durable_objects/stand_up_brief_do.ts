@@ -6,6 +6,7 @@ import { Bindings } from '../bindings';
 import { standUpParticipantResponseMessage } from '../ui/stand_up_participant_response_message';
 import { standUpBriefMessage } from '../ui/stand_up_brief_message';
 import { db } from '../../../prisma-data-proxy';
+import { Toucan } from 'toucan-js';
 
 /*********************** Types ***********************/
 export type SlackStandUpBriefDORequest =
@@ -89,6 +90,22 @@ export class SlackStandUpBriefDO {
       throw new Error('Data or state not found');
     }
 
+    const standUpExists = await db(this._env.DATABASE_URL).slackStandUp.count({
+      where: {
+        id: this._data.standUpId,
+      },
+    });
+
+    if (!standUpExists) {
+      new Toucan({ dsn: this._env.SENTRY_DSN }).captureException(
+        new Error(
+          `Stand does not exist: ${this._data.standUpId}, deleting brief DO`,
+        ),
+      );
+      await this._delete();
+      return;
+    }
+
     // If the stand-up has been briefed, then schedule the next stand-up brief
     if (this._state.briefed) {
       this._state.briefed = false;
@@ -116,6 +133,8 @@ export class SlackStandUpBriefDO {
     this._state.responses = [];
     this._state.briefed = true;
     await this._persist();
+    // Rescheduled for 8 hours later to give participants time to respond
+    // to the stand-up brief even if they are late
     await this._reschedule({ hours: 8 });
 
     return new Response(null, { status: 200 });

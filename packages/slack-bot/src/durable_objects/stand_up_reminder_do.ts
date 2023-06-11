@@ -8,6 +8,7 @@ import { slackStandUpReminderMessage } from '../ui/stand_up_reminder_message';
 import { ISlackMessageResponse } from '../client/types';
 import { db } from '../../../prisma-data-proxy';
 import { jiraIntegrationMessage } from '../ui/jira_integration_message';
+import { Toucan } from 'toucan-js';
 
 /************************* Types *************************/
 export type ISlackStandUpReminderDORequest =
@@ -63,7 +64,25 @@ export class SlackStandUpReminderDO {
       throw new Error('Data and state must be initialized');
     }
 
-    const { participantSlackId, frequency, slackTeamId, timezone } = this._data;
+    const { standUpId, participantSlackId, frequency, slackTeamId, timezone } =
+      this._data;
+
+    const standUpExists = await db(this._env.DATABASE_URL).slackStandUp.count({
+      where: {
+        id: standUpId,
+      },
+    });
+
+    // If the stand-up does not exist, delete the reminder
+    // This can happen if the stand-up is deleted by the admin, but the reminder
+    // is still active and is stale
+    if (!standUpExists) {
+      new Toucan({ dsn: this._env.SENTRY_DSN }).captureException(
+        new Error(`Stand does not exist: ${standUpId}, deleting reminder`),
+      );
+      await this._delete();
+      return;
+    }
 
     // Check if the participant is active in any other stand up conversation
     const isInActiveConversation = await db(

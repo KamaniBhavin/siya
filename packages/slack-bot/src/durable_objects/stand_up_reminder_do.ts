@@ -90,6 +90,11 @@ export class SlackStandUpReminderDO {
     if (this._state.alerted) {
       await this._reschedule();
       await this._deleteAlertMessage();
+      await slackClient.postMessage({
+        channel: this._data.participantSlackId,
+        text: 'Looks like you missed your stand up update :disappointed:. I will remind you again on the next stand up.',
+      });
+
       return;
     }
 
@@ -236,6 +241,11 @@ export class SlackStandUpReminderDO {
       throw new Error('Data must be initialized');
     }
 
+    if (duration) {
+      await this._storage.setAlarm(DateTime.now().plus(duration).toMillis());
+      return;
+    }
+
     const { hour, minute, second } = DateTime.fromMillis(
       this._data.remindAt,
     ).setZone(this._data.timezone);
@@ -243,13 +253,7 @@ export class SlackStandUpReminderDO {
     const remindAt = DateTime.now()
       .setZone(this._data.timezone)
       .set({ hour, minute, second })
-      .plus(duration || { days: 1 });
-
-    console.log(
-      `Rescheduling Stand-Up Reminder DO with id: ${
-        this._data.standUpId
-      } reminding at ${this._data.remindAt} to ${remindAt.toISO()}`,
-    );
+      .plus({ days: 1 });
 
     await this._storage.setAlarm(remindAt.toMillis());
   }

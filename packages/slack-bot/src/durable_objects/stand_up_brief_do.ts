@@ -269,6 +269,11 @@ export class SlackStandUpBriefDO {
       throw new Error('Data must be initialized');
     }
 
+    if (duration) {
+      await this._storage.setAlarm(DateTime.now().plus(duration).toMillis());
+      return;
+    }
+
     const { hour, minute, second } = DateTime.fromMillis(
       this._data.standUpAt,
     ).setZone(this._data.timezone);
@@ -276,13 +281,7 @@ export class SlackStandUpBriefDO {
     const nextStandUpAt = DateTime.now()
       .setZone(this._data.timezone)
       .set({ hour, minute, second })
-      .plus(duration || { days: 1 });
-
-    console.log(
-      `Rescheduling Stand-Up Brief DO with id: ${
-        this._data.standUpId
-      } occurring at ${this._data.standUpAt} to ${nextStandUpAt.toISO()}`,
-    );
+      .plus({ days: 1 });
 
     await this._storage.setAlarm(nextStandUpAt.toMillis());
   }

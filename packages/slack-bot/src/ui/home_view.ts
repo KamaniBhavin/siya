@@ -2,6 +2,7 @@ import { SlackStandUp } from '@prisma/client/edge';
 import { SlackHomeView } from '../client/types';
 import { KnownBlock } from '@slack/types';
 import { DateTime } from 'luxon';
+import { Frequency } from '@prisma/client';
 
 export function slackHomeView(
   userId: string,
@@ -93,7 +94,7 @@ export function buildStandUpBlocks(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*${name}* \n ${frequency} \n ${standUpAt}`,
+          text: `*${name}* \n ${frequencyText(frequency)} \n ${standUpAt}`,
         },
         accessory: {
           type: 'button',
@@ -130,4 +131,15 @@ export function buildStandUpBlocks(
       },
     ];
   });
+}
+
+function frequencyText(frequency: Frequency): string {
+  switch (frequency) {
+    case Frequency.MONDAY_TO_FRIDAY:
+      return 'Monday to Friday';
+    case Frequency.MONDAY_TO_SATURDAY:
+      return 'Monday to Saturday';
+    case Frequency.EVERYDAY:
+      return 'Everyday';
+  }
 }

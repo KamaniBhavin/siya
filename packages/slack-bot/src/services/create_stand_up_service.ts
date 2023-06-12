@@ -120,7 +120,7 @@ export async function createStandUp(
   await initializeSlackStandUpConversationDO(standUp, env);
 }
 
-async function initializeSlackStandUpReminderDOs(
+export async function initializeSlackStandUpReminderDOs(
   standUp: SlackStandUp & { participants: SlackStandUpParticipant[] },
   env: Bindings,
 ) {
@@ -179,7 +179,7 @@ async function initializeSlackStandUpReminderDOs(
 // Initialize the SlackStandUpBriefDO for the stand-up.
 // The DO will accumulate the stand-up responses and send a brief to the
 // stand-up channel at the stand-up time.
-async function initializeSlackStandUpBriefDO(
+export async function initializeSlackStandUpBriefDO(
   standUp: SlackStandUp & { participants: SlackStandUpParticipant[] },
   env: Bindings,
 ) {
@@ -200,7 +200,7 @@ async function initializeSlackStandUpBriefDO(
 // Initialize the SlackStandUpConversationDOs for each participant.
 // A combination of the stand-up ID and the user's Slack ID is always unique.
 // This will engage the user in a conversation with the bot to do the stand-up.
-async function initializeSlackStandUpConversationDO(
+export async function initializeSlackStandUpConversationDO(
   standUp: SlackStandUp & { participants: SlackStandUpParticipant[] } & {
     questions: SlackStandUpQuestion[];
   },

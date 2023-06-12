@@ -11,6 +11,10 @@ import { interactions } from './handlers/interactions';
 import { EventSchema } from './schemas/events';
 import { events } from './handlers/events';
 import { jiraIntegration } from './handlers/jira_integration';
+import {
+  addParticipants,
+  removeParticipants,
+} from './handlers/add_or_remove_participants';
 
 const app = new Hono<{ Bindings: Bindings }>();
 // Register sentry middleware
@@ -74,6 +78,28 @@ app.post(
   }),
   jiraIntegration,
 );
+
+// A Slack shortcut route to add a participant to a stand-up
+app.post(
+  '/add-participants',
+  zValidator('form', SlashCommandSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  addParticipants,
+);
+
+app.post(
+  '/remove-participants',
+  zValidator('form', SlashCommandSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  removeParticipants,
+);
+
 export default app;
 
 /********************** Durable Objects **********************/

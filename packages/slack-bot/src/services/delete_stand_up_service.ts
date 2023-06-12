@@ -27,9 +27,33 @@ export async function deleteStandUp(
     },
   });
 
+  // Delete the stand-up reminders, conversations, and brief from the DOs
+  const participantIds = standUp.participants.map(
+    (participant) => participant.slackUserId,
+  );
+  await deleteParticipantsDOs(standUpId, participantIds, env);
+
+  // Delete the stand-up from the database
+  await prisma.slackStandUp.delete({
+    where: {
+      id: standUpId,
+    },
+  });
+
+  // Publish the home tab for the user to remove the stand-up from the UI
+  if (shouldPublishHome) {
+    await publishHome(standUp.slackUserId, standUp.slackTeamId, env);
+  }
+}
+
+export async function deleteParticipantsDOs(
+  standUpId: string,
+  participantIds: string[],
+  env: Bindings,
+) {
   // get all the DO IDs for the stand-up reminders from the participant's Slack user IDs
-  const compositeIds = standUp.participants.map((participant) => {
-    return `${standUp.id}-${participant.slackUserId}`;
+  const compositeIds = participantIds.map((participantId) => {
+    return `${standUpId}-${participantId}`;
   });
 
   // Make a request to the Reminder DO API to delete itself
@@ -55,21 +79,9 @@ export async function deleteStandUp(
   );
 
   // Make a request to the Brief DO API to delete itself
-  const doId = env.SLACK_STAND_UP_BRIEF_DO.idFromName(standUp.id);
+  const doId = env.SLACK_STAND_UP_BRIEF_DO.idFromName(standUpId);
   const doStub = await env.SLACK_STAND_UP_BRIEF_DO.get(doId);
   await doStub.fetch(
     new Request(env.SIYA_SLACK_BOT_API_URL, { method: 'DELETE' }),
   );
-
-  // Delete the stand-up from the database
-  await prisma.slackStandUp.delete({
-    where: {
-      id: standUpId,
-    },
-  });
-
-  // Publish the home tab for the user to remove the stand-up from the UI
-  if (shouldPublishHome) {
-    await publishHome(standUp.slackUserId, standUp.slackTeamId, env);
-  }
 }

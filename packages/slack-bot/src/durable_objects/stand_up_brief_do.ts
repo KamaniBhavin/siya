@@ -182,22 +182,29 @@ export class SlackStandUpBriefDO {
     } = data.standUp;
 
     const standUpTime = new Date(time);
-    const standUpAt = DateTime.now()
+    let standUpAt = DateTime.now()
       .setZone(timezone)
-      .set({ hour: standUpTime.getHours(), minute: standUpTime.getMinutes() })
-      .toMillis();
+      .set({ hour: standUpTime.getHours(), minute: standUpTime.getMinutes() });
 
-    await this._storage.setAlarm(standUpAt);
+    // If the stand-up time has already passed, then schedule it for the next day
+    if (standUpAt.diffNow().milliseconds < 0) {
+      standUpAt = standUpAt.plus({ days: 1 });
+    }
 
-    const participantsSlackIds = participants.map((p) => p.slackUserId);
+    await this._storage.setAlarm(standUpAt.toMillis());
+
+    const participantsSlackIds = this._data?.participantsSlackIds ?? [];
+    participants.forEach((participant) => {
+      participantsSlackIds.push(participant.slackUserId);
+    });
 
     this._data = <ISlackStandUpBriefDOData>{
       standUpId,
       slackChannelId,
       slackTeamId,
-      standUpAt,
+      standUpAt: standUpAt.toMillis(),
       timezone,
-      participantsSlackIds,
+      participantsSlackIds: Array.from(new Set(participantsSlackIds)),
     };
 
     this._state = <ISlackStandUpBriefDOState>{

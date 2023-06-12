@@ -91,11 +91,26 @@ export function buildStandUpBlocks(
 
     return [
       {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: `> ID: *${id}*`,
+          },
+        ],
+      },
+      {
         type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*${name}* \n ${frequencyText(frequency)} \n ${standUpAt}`,
-        },
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: `
+            *Name:* ${name}\n*Frequency:* ${frequencyText(
+              frequency,
+            )}\n*Time:* ${standUpAt}\n
+            `,
+          },
+        ],
         accessory: {
           type: 'button',
           text: {

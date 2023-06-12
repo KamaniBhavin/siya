@@ -95,7 +95,7 @@ export function buildStandUpBlocks(
         elements: [
           {
             type: 'mrkdwn',
-            text: `> ID: *${id}*`,
+            text: `> *ID*: ${id}`,
           },
         ],
       },

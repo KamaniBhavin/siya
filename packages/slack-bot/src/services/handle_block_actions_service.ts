@@ -13,6 +13,7 @@ import {
   SlackJiraIntegrationMessageState,
   SlackJiraIntegrationMessageStateSchema,
 } from '../client/states';
+import helpMessage from '../ui/help_message';
 
 export async function handleBlockActions(
   interaction: ISlackBlockAction,
@@ -49,6 +50,9 @@ export async function handleBlockActions(
       break;
     case 'cancel_integration':
       await cancelJiraIntegration(interaction);
+      break;
+    case 'help':
+      await sendHelpMessage(interaction, env);
   }
 }
 
@@ -200,4 +204,21 @@ async function cancelJiraIntegration(interaction: ISlackBlockAction) {
   });
 
   await fetch(request);
+}
+
+// A block action to send a help message
+// This is a non-blocking action
+async function sendHelpMessage(interaction: ISlackBlockAction, env: Bindings) {
+  const {
+    user: { id: slackUserId },
+    team: { id: slackTeamId },
+  } = interaction;
+
+  const token = z.string().parse(await env.SLACK_BOT_TOKENS.get(slackTeamId));
+  const slackClient = new Slack(token);
+
+  await slackClient.postMessage({
+    channel: slackUserId,
+    blocks: helpMessage().blocks,
+  });
 }

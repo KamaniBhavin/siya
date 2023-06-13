@@ -1,4 +1,4 @@
-import { Context, Hono } from 'hono';
+import { Hono } from 'hono';
 import { Bindings } from './bindings';
 import { sentry } from './middlewares/sentry';
 import { zValidator } from '@hono/zod-validator';
@@ -10,11 +10,16 @@ import { InteractionsSchema } from './schemas/interactions';
 import { interactions } from './handlers/interactions';
 import { EventSchema } from './schemas/events';
 import { events } from './handlers/events';
-import { jiraIntegration } from './handlers/jira_integration';
+import {
+  disableJiraIntegration,
+  enableJiraIntegration,
+} from './handlers/jira_integration';
 import {
   addParticipants,
   removeParticipants,
 } from './handlers/add_or_remove_participants';
+import { listStandUps } from './handlers/list_stand_ups';
+import help from './handlers/help';
 
 const app = new Hono<{ Bindings: Bindings }>();
 // Register sentry middleware
@@ -37,7 +42,7 @@ app.get(
 
 // A Slack route to create a new stand-up
 app.post(
-  '/create',
+  '/create-stand-up',
   zValidator('form', SlashCommandSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
@@ -68,15 +73,37 @@ app.post(
   events,
 );
 
-// A Slack shortcut route to add JIRA integration
+// A Slack shortcut route list the stand-ups for a user
 app.post(
-  '/jira-integration',
+  '/list-stand-ups',
   zValidator('form', SlashCommandSchema, (result, c) => {
     if (!result.success) {
       return c.text(JSON.stringify(result.error.errors), { status: 400 });
     }
   }),
-  jiraIntegration,
+  listStandUps,
+);
+
+// A Slack shortcut route to enable JIRA integration
+app.post(
+  '/enable-jira-integration',
+  zValidator('form', SlashCommandSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  enableJiraIntegration,
+);
+
+// A Slack shortcut route to disable JIRA integration
+app.post(
+  '/disable-jira-integration',
+  zValidator('form', SlashCommandSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  disableJiraIntegration,
 );
 
 // A Slack shortcut route to add a participant to a stand-up
@@ -98,6 +125,17 @@ app.post(
     }
   }),
   removeParticipants,
+);
+
+// A Slack shortcut route to send help message
+app.post(
+  '/help',
+  zValidator('form', SlashCommandSchema, (result, c) => {
+    if (!result.success) {
+      return c.text(JSON.stringify(result.error.errors), { status: 400 });
+    }
+  }),
+  help,
 );
 
 export default app;

@@ -12,20 +12,38 @@ import { Slack } from '../client/slack';
 import { SlackStandUp, SlackStandUpQuestion } from '@prisma/client/edge';
 import { deleteParticipantsDOs } from '../services/delete_stand_up_service';
 
+type ValidateSlashCommandResult = {
+  userId: string;
+  teamId: string;
+  channelId: string;
+  standUp: SlackStandUp & { questions: SlackStandUpQuestion[] };
+  participantSlackIds: string[];
+};
+
 // This function is used by both the add and remove participants handlers
 // So we can avoid duplicating code
 // It validates the slash command format and extracts the standUpId and participants
 async function validateSlashCommand(context: Context<{ Bindings: Bindings }>) {
   const form = await context.req.formData();
-  const { user_id: userId, text } = SlashCommandSchema.parse(
-    Object.fromEntries(form.entries()),
-  );
+  const {
+    user_id: userId,
+    team_id: teamId,
+    channel_id: channelId,
+    text,
+  } = SlashCommandSchema.parse(Object.fromEntries(form.entries()));
+  const token = z
+    .string()
+    .parse(await context.env.SLACK_BOT_TOKENS.get(teamId));
+  const slackClient = new Slack(token);
 
   if (!text) {
-    return context.newResponse(
-      'Please provide a stand up id and a list of participants to add to the stand up',
-      200,
-    );
+    await slackClient.postEphemeral({
+      channel: channelId,
+      user: userId,
+      text: 'Please provide a stand-up id and a list of participants',
+    });
+
+    return null;
   }
 
   // parse the text to get the standUpId and participants
@@ -44,18 +62,24 @@ async function validateSlashCommand(context: Context<{ Bindings: Bindings }>) {
   });
 
   if (!standUp) {
-    return context.newResponse(
-      `Stand up with id ${standUpId} does not exist`,
-      200,
-    );
+    await slackClient.postEphemeral({
+      channel: channelId,
+      user: userId,
+      text: `Stand up does not exist. See Home tab for a list of stand ups`,
+    });
+
+    return null;
   }
 
   // Check if user is the creator of the stand-up
   if (standUp.slackUserId !== userId) {
-    return context.newResponse(
-      `You do not have permission to add participants to stand up ${standUp.name}. Only the <@${standUp.slackUserId}> can add participants to this stand up.`,
-      200,
-    );
+    await slackClient.postEphemeral({
+      channel: channelId,
+      user: userId,
+      text: `Only <@${standUp.slackUserId}> can add or remove participants`,
+    });
+
+    return null;
   }
 
   // parse participants to get slackUserIds
@@ -69,15 +93,21 @@ async function validateSlashCommand(context: Context<{ Bindings: Bindings }>) {
   );
 
   if (participantSlackIds.size === 0) {
-    return context.newResponse(
-      'Please provide a space-separated list of Slack users',
-      200,
-    );
+    await slackClient.postEphemeral({
+      channel: channelId,
+      user: userId,
+      text: `Please provide a list of participants following the stand-up id`,
+    });
+
+    return null;
   }
 
   return {
+    userId,
+    teamId,
+    channelId,
     standUp,
-    participantSlackIds,
+    participantSlackIds: Array.from(participantSlackIds),
   };
 }
 
@@ -87,31 +117,26 @@ async function validateSlashCommand(context: Context<{ Bindings: Bindings }>) {
 export async function addParticipants(
   context: Context<{ Bindings: Bindings }>,
 ) {
-  const response = await validateSlashCommand(context);
+  const result = await validateSlashCommand(context);
 
-  // If the response is a Response object, then there was an error
+  // If the response is a Response object, then there was an error,
   // and we should return the response
-  if (response instanceof Response) {
-    return response;
+  if (!result) {
+    return context.newResponse(null, 200);
   }
 
-  // Otherwise, we can proceed with adding the participants
-  const { standUp, participantSlackIds } = response;
-
   // This is non-blocking, so we don't need to wait for it to finish
-  context.executionCtx.waitUntil(
-    createParticipantsAndDOs(standUp, participantSlackIds, context.env),
-  );
+  context.executionCtx.waitUntil(createParticipantsAndDOs(result, context.env));
 
   return context.newResponse(null, 200);
 }
 
 // Asynchronously creates the participants and DOs for the stand-up
 async function createParticipantsAndDOs(
-  standUp: SlackStandUp & { questions: SlackStandUpQuestion[] },
-  participantSlackIds: Set<string>,
+  data: ValidateSlashCommandResult,
   env: Bindings,
 ) {
+  const { standUp, participantSlackIds, userId, channelId } = data;
   const participants = await Promise.all(
     Array.from(participantSlackIds).map(async (slackUserId) => {
       return db(env.DATABASE_URL).slackStandUpParticipant.upsert({
@@ -148,9 +173,10 @@ async function createParticipantsAndDOs(
     .parse(await env.SLACK_BOT_TOKENS.get(standUp.slackTeamId));
 
   const slackClient = new Slack(token);
-  await slackClient.postMessage({
-    channel: standUp.slackUserId,
-    text: `Successfully added ${participantsText} to stand up ${standUp.name}`,
+  await slackClient.postEphemeral({
+    channel: channelId,
+    user: userId,
+    text: `Added ${participantsText} to stand-up ${standUp.name}`,
   });
 }
 
@@ -160,35 +186,26 @@ async function createParticipantsAndDOs(
 export async function removeParticipants(
   context: Context<{ Bindings: Bindings }>,
 ) {
-  const response = await validateSlashCommand(context);
+  const result = await validateSlashCommand(context);
 
-  // If the response is a Response object, then there was an error
+  // If the response is a Response object, then there was an error,
   // and we should return the response
-  if (response instanceof Response) {
-    return response;
+  if (!result) {
+    return context.newResponse(null, 200);
   }
 
-  // Otherwise, we can proceed with adding the participants
-  const { standUp, participantSlackIds } = response;
-
   // This is non-blocking, so we don't need to wait for it to finish
-  context.executionCtx.waitUntil(
-    deleteParticipantsAndDos(
-      standUp,
-      Array.from(participantSlackIds),
-      context.env,
-    ),
-  );
+  context.executionCtx.waitUntil(deleteParticipantsAndDos(result, context.env));
 
   return context.newResponse(null, 200);
 }
 
 // Asynchronously deletes the participants and DOs for the stand-up
 async function deleteParticipantsAndDos(
-  standUp: SlackStandUp,
-  participantSlackIds: string[],
+  result: ValidateSlashCommandResult,
   env: Bindings,
 ) {
+  const { standUp, participantSlackIds, userId, channelId } = result;
   await deleteParticipantsDOs(standUp.id, participantSlackIds, env);
 
   await db(env.DATABASE_URL).slackStandUpParticipant.deleteMany({
@@ -210,8 +227,9 @@ async function deleteParticipantsAndDos(
     .parse(await env.SLACK_BOT_TOKENS.get(standUp.slackTeamId));
   const slackClient = new Slack(token);
 
-  await slackClient.postMessage({
-    channel: standUp.slackUserId,
-    text: `Successfully removed ${participantsText} from stand up ${standUp.name}`,
+  await slackClient.postEphemeral({
+    channel: channelId,
+    user: userId,
+    text: `Removed ${participantsText} from stand-up ${standUp.name}`,
   });
 }

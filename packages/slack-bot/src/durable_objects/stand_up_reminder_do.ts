@@ -106,7 +106,6 @@ export class SlackStandUpReminderDO {
     const weekday = DateTime.now().setZone(timezone).weekday;
 
     if (this._state.alerted) {
-      await this._reschedule();
       await this._deleteAlertMessage();
       await slackClient.postMessage({
         channel: this._data.participantSlackId,
@@ -236,6 +235,9 @@ export class SlackStandUpReminderDO {
 
     this._state.alerted = false;
     await this._persist();
+
+    // Reschedule the reminder to the next stand up
+    await this._reschedule();
 
     const response = await slackClient.deleteMessage({
       channel: messageResponse.channel,

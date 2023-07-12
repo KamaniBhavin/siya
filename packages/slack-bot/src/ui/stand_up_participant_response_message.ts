@@ -3,6 +3,7 @@ import {
   IStandUpResponse,
 } from '../durable_objects/stand_up_brief_do';
 import { SlackBlocks } from '../client/types';
+import { formatResponseText } from './stand_up_brief_message';
 
 export function standUpParticipantResponseMessage(
   response: ISlackStandUpParticipantResponse,
@@ -41,7 +42,7 @@ function buildSubmitStandUpBlocks(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: responseText(data),
+          text: formatResponseText(data),
         },
       },
       {
@@ -58,14 +59,6 @@ function buildSubmitStandUpBlocks(
       },
     ],
   };
-}
-
-function responseText(responses: IStandUpResponse[]) {
-  return responses
-    .map((response) => {
-      return `- ${response.question} \n> ${response.response}`;
-    })
-    .join('\n');
 }
 
 function buildSkipStandUpBlocks(

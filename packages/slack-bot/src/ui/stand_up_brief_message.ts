@@ -93,7 +93,7 @@ function buildStandUpResponseBlocks(
           text: {
             type: 'mrkdwn',
             text: `
-						*<@${response.participantSlackId}>*\n${responseText(data)}`,
+						*<@${response.participantSlackId}>*\n${formatResponseText(data)}`,
           },
         },
         {
@@ -114,7 +114,7 @@ function buildStandUpResponseBlocks(
  *  I worked on the stand-up feature
  *
  */
-function responseText(responses: IStandUpResponse[]) {
+export function formatResponseText(responses: IStandUpResponse[]) {
   return responses
     .map((response) => {
       return `> ${response.question} \n ${response.response}`;

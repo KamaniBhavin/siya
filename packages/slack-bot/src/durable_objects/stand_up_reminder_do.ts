@@ -8,6 +8,7 @@ import { slackStandUpReminderMessage } from '../ui/stand_up_reminder_message';
 import { ISlackMessageResponse } from '../client/types';
 import { db } from '../../../prisma-data-proxy';
 import { Toucan } from 'toucan-js';
+import { isValidDayOfStandUp } from '../utils';
 
 /************************* Types *************************/
 export type ISlackStandUpReminderDORequest =
@@ -103,7 +104,6 @@ export class SlackStandUpReminderDO {
       .string()
       .parse(await this._env.SLACK_BOT_TOKENS.get(slackTeamId));
     const slackClient = new Slack(token);
-    const weekday = DateTime.now().setZone(timezone).weekday;
 
     if (this._state.alerted) {
       await this._deleteAlertMessage();
@@ -115,7 +115,7 @@ export class SlackStandUpReminderDO {
       return;
     }
 
-    if (!this._isValidDayOfStandUp(frequency, weekday)) {
+    if (!isValidDayOfStandUp(frequency, timezone)) {
       await this._reschedule();
       return;
     }
@@ -269,18 +269,6 @@ export class SlackStandUpReminderDO {
       .plus({ days: 1 });
 
     await this._storage.setAlarm(remindAt.toMillis());
-  }
-
-  // Check if the alarm went off today was a valid day for the stand-up.
-  private _isValidDayOfStandUp(frequency: Frequency, weekday: number) {
-    switch (frequency) {
-      case Frequency.MONDAY_TO_FRIDAY:
-        return weekday >= 1 && weekday <= 5;
-      case Frequency.MONDAY_TO_SATURDAY:
-        return weekday >= 1 && weekday <= 6;
-      case Frequency.EVERYDAY:
-        return true;
-    }
   }
 
   // Delete the DO and all its data.

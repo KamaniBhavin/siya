@@ -7,6 +7,7 @@ import { standUpParticipantResponseMessage } from '../ui/stand_up_participant_re
 import { standUpBriefMessage } from '../ui/stand_up_brief_message';
 import { db } from '../../../prisma-data-proxy';
 import { Toucan } from 'toucan-js';
+import { isValidDayOfStandUp } from '../utils';
 
 /*********************** Types ***********************/
 export type SlackStandUpBriefDORequest =
@@ -90,19 +91,24 @@ export class SlackStandUpBriefDO {
       throw new Error('Data or state not found');
     }
 
-    const standUpExists = await db(this._env.DATABASE_URL).slackStandUp.count({
+    const standUp = await db(this._env.DATABASE_URL).slackStandUp.findUnique({
       where: {
         id: this._data.standUpId,
       },
     });
 
-    if (!standUpExists) {
+    if (!standUp) {
       new Toucan({ dsn: this._env.SENTRY_DSN }).captureException(
         new Error(
           `Stand does not exist: ${this._data.standUpId}, deleting brief DO`,
         ),
       );
       await this._delete();
+      return;
+    }
+
+    if (!isValidDayOfStandUp(standUp.frequency, standUp.timezone)) {
+      await this._reschedule();
       return;
     }
 
